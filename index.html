@@ -1,0 +1,1617 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Acta de Inspección HSEQ - En Obra (PEV-01/F06) | Prace</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- html2pdf.js para generación directa de PDF fiel al formato A4 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <!-- SheetJS para exportación resumen del historial a Excel -->
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+    <!-- Fuentes -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        prace: {
+                            blue: '#0f294a',
+                            accent: '#0066b2',
+                            light: '#eef4fa',
+                            gold: '#d97706'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Estilos de controles táctiles de campo */
+        .pill-btn {
+            transition: all 0.12s ease-in-out;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .pill-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* Canvas de firma táctil */
+        .sig-canvas {
+            touch-action: none;
+            background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
+            background-size: 16px 16px;
+        }
+
+        /* Estilos estrictos para la plantilla oficial PDF PEV-01/F06 */
+        #pdf-template-wrapper {
+            position: fixed;
+            left: -9999px;
+            top: 0;
+            width: 210mm;
+            background: #ffffff;
+            color: #000000;
+            font-family: Arial, Helvetica, sans-serif;
+            z-index: -1;
+        }
+        .official-sheet {
+            width: 210mm;
+            padding: 8mm 9mm;
+            background: #ffffff;
+            box-sizing: border-box;
+        }
+        .official-table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+            margin-bottom: 5px;
+        }
+        .official-table th,
+        .official-table td {
+            border: 1px solid #1e293b;
+            padding: 2.2px 4px;
+            font-size: 7.4pt;
+            line-height: 1.15;
+            vertical-align: middle;
+            word-wrap: break-word;
+        }
+        .official-table th {
+            background-color: #e2e8f0;
+            font-weight: 700;
+            text-align: center;
+            color: #0f172a;
+        }
+        .official-table th.section-title {
+            background-color: #cbd5e1;
+            text-align: left;
+            font-size: 7.8pt;
+            padding-left: 6px;
+        }
+        .cell-x {
+            text-align: center;
+            font-weight: 800;
+            font-size: 8.5pt;
+            color: #000000;
+        }
+        .page-break-before {
+            page-break-before: always;
+            break-before: page;
+        }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 antialiased pb-24">
+
+    <!-- Barra Superior Fija -->
+    <header class="bg-prace-blue text-white sticky top-0 z-40 shadow-md border-b border-slate-700">
+        <div class="max-w-5xl mx-auto px-3 sm:px-6 py-2.5">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+                <!-- Identidad y Estado en Tiempo Real -->
+                <div class="flex items-center space-x-2.5">
+                    <div class="bg-white text-prace-blue px-2.5 py-1 rounded font-extrabold tracking-tight text-sm sm:text-base shadow-sm">
+                        PRACE
+                    </div>
+                    <div>
+                        <div class="flex items-center space-x-2">
+                            <h1 class="text-sm sm:text-base font-bold leading-tight">Acta HSEQ PEV-01/F06</h1>
+                            <span class="hidden sm:inline-block text-[10px] font-mono bg-slate-800 text-slate-300 px-1.5 py-0.5 rounded">ED. 3</span>
+                        </div>
+                        <div class="flex items-center space-x-3 text-[11px] text-slate-300 mt-0.5">
+                            <span id="header-progress" class="font-mono">0/46 ítems</span>
+                            <span>•</span>
+                            <span id="header-nc-badge" class="font-mono font-bold text-emerald-400">0 NC</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Botones de Acción Rápida -->
+                <div class="flex items-center space-x-1.5 sm:space-x-2">
+                    <button id="btn-mark-all-ok" type="button" title="Marcar todos los ítems como correctos" class="pill-btn inline-flex items-center px-2.5 py-2 rounded-lg text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white shadow-sm">
+                        <svg class="w-4 h-4 sm:mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                        <span class="hidden md:inline">Marcar todo OK (SI)</span>
+                        <span class="md:hidden">Todo OK</span>
+                    </button>
+
+                    <button id="btn-open-history" type="button" class="pill-btn relative inline-flex items-center px-2.5 py-2 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-white border border-slate-600">
+                        <svg class="w-4 h-4 sm:mr-1 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <span class="hidden sm:inline">Historial / Registro</span>
+                        <span id="history-count-badge" class="ml-1.5 bg-amber-500 text-slate-950 font-mono font-bold text-[10px] px-1.5 py-0.2 rounded-full">0</span>
+                    </button>
+
+                    <button id="btn-open-cloud" type="button" title="Configuración Cloud Google Drive / Sheets" class="pill-btn inline-flex items-center p-2 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-sky-300 border border-slate-600">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"></path>
+                        </svg>
+                    </button>
+
+                    <button id="btn-generate-pdf" type="button" class="pill-btn inline-flex items-center px-3 py-2 rounded-lg text-xs font-bold bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-sm">
+                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                        <span>Generar PDF Oficial</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Barra de Progreso Visual -->
+            <div class="w-full bg-slate-800 h-1.5 rounded-full mt-2 overflow-hidden">
+                <div id="progress-bar-fill" class="bg-emerald-400 h-full transition-all duration-300" style="width: 0%"></div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Notificaciones Toast -->
+    <div id="toast-container" class="fixed bottom-20 right-4 z-50 flex flex-col space-y-2 pointer-events-none max-w-sm"></div>
+
+    <!-- Contenedor Principal de Formulario -->
+    <main class="max-w-5xl mx-auto px-3 sm:px-6 pt-4 space-y-4">
+
+        <!-- Tarjeta de Datos Generales de la Obra -->
+        <section class="bg-white rounded-xl border border-slate-200 shadow-sm p-4 sm:p-5">
+            <div class="flex items-center justify-between mb-3 pb-2 border-b border-slate-100">
+                <h2 class="text-xs sm:text-sm font-bold uppercase tracking-wider text-prace-blue flex items-center">
+                    <span class="w-2 h-2 rounded-full bg-prace-accent mr-2"></span>
+                    Datos Generales de la Inspección
+                </h2>
+                <button id="btn-reset-form" type="button" class="text-xs font-medium text-slate-500 hover:text-rose-600 underline">
+                    Limpiar formulario
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                <div>
+                    <label for="meta-obra" class="block text-xs font-semibold text-slate-600 mb-1">OBRA</label>
+                    <input id="meta-obra" type="text" class="w-full px-3 py-2 text-sm font-medium border border-slate-300 rounded-lg focus:ring-2 focus:ring-prace-accent focus:border-prace-accent bg-slate-50 focus:bg-white">
+                </div>
+                <div>
+                    <label for="meta-jefe" class="block text-xs font-semibold text-slate-600 mb-1">JEFE OBRA</label>
+                    <input id="meta-jefe" type="text" class="w-full px-3 py-2 text-sm font-medium border border-slate-300 rounded-lg focus:ring-2 focus:ring-prace-accent focus:border-prace-accent bg-slate-50 focus:bg-white">
+                </div>
+                <div>
+                    <label for="meta-inspector" class="block text-xs font-semibold text-slate-600 mb-1">INSPECCIONADO POR</label>
+                    <input id="meta-inspector" type="text" class="w-full px-3 py-2 text-sm font-medium border border-slate-300 rounded-lg focus:ring-2 focus:ring-prace-accent focus:border-prace-accent bg-slate-50 focus:bg-white">
+                </div>
+                <div>
+                    <label for="meta-fecha" class="block text-xs font-semibold text-slate-600 mb-1">FECHA</label>
+                    <input id="meta-fecha" type="date" class="w-full px-3 py-2 text-sm font-mono font-medium border border-slate-300 rounded-lg focus:ring-2 focus:ring-prace-accent focus:border-prace-accent bg-slate-50 focus:bg-white">
+                </div>
+            </div>
+        </section>
+
+        <!-- Índice Rápido de Bloques (Píldoras horizontales deslizables en móvil) -->
+        <nav class="flex items-center space-x-1.5 overflow-x-auto pb-1 no-scrollbar" id="quick-nav">
+            <!-- Generado dinámicamente -->
+        </nav>
+
+        <!-- Contenedor de los 7 Bloques de Inspección -->
+        <div id="blocks-container" class="space-y-4">
+            <!-- Renderizado dinámicamente con los 46 ítems literales -->
+        </div>
+
+        <!-- Bloque de Cierre: Observaciones Generales y Firmas Táctiles -->
+        <section class="bg-white rounded-xl border border-slate-200 shadow-sm p-4 sm:p-5 space-y-5">
+            <div class="border-b border-slate-100 pb-2">
+                <h2 class="text-xs sm:text-sm font-bold uppercase tracking-wider text-prace-blue flex items-center">
+                    <span class="w-2 h-2 rounded-full bg-prace-accent mr-2"></span>
+                    Cierre del Acta, Observaciones y Firmas
+                </h2>
+            </div>
+
+            <!-- Observaciones Generales -->
+            <div>
+                <label for="meta-observaciones" class="block text-xs font-bold uppercase text-slate-700 mb-1.5">OBSERVACIONES GENERALES</label>
+                <textarea id="meta-observaciones" rows="3" placeholder="Anotar conclusiones generales de la inspección, plazos de subsanación de NC o comentarios relevantes..." class="w-full px-3 py-2.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-prace-accent focus:border-prace-accent"></textarea>
+            </div>
+
+            <!-- Paneles de Firma Manuscrita -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <!-- Firma 1: Inspector -->
+                <div class="border border-slate-200 rounded-xl p-3 bg-slate-50">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-xs font-bold uppercase text-slate-700">FIRMA INSPECTOR</span>
+                        <button type="button" onclick="clearSignature('inspector')" class="text-xs font-semibold text-rose-600 hover:text-rose-700 px-2 py-1 rounded bg-rose-50 border border-rose-200">
+                            Borrar firma
+                        </button>
+                    </div>
+                    <div class="bg-white border-2 border-dashed border-slate-300 rounded-lg overflow-hidden h-36 relative">
+                        <canvas id="sig-inspector" class="sig-canvas w-full h-full cursor-crosshair"></canvas>
+                        <span class="pointer-events-none absolute bottom-1.5 right-2 text-[10px] text-slate-400">Firme con el dedo o ratón</span>
+                    </div>
+                </div>
+
+                <!-- Firma 2: Vº Bº Jefe de Obra / Encargado -->
+                <div class="border border-slate-200 rounded-xl p-3 bg-slate-50">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-xs font-bold uppercase text-slate-700">Vº Bº JEFE DE OBRA / JEFE EQUIPO / ENCARGADO</span>
+                        <button type="button" onclick="clearSignature('jefe')" class="text-xs font-semibold text-rose-600 hover:text-rose-700 px-2 py-1 rounded bg-rose-50 border border-rose-200">
+                            Borrar firma
+                        </button>
+                    </div>
+                    <div class="bg-white border-2 border-dashed border-slate-300 rounded-lg overflow-hidden h-36 relative">
+                        <canvas id="sig-jefe" class="sig-canvas w-full h-full cursor-crosshair"></canvas>
+                        <span class="pointer-events-none absolute bottom-1.5 right-2 text-[10px] text-slate-400">Firme con el dedo o ratón</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Botonera Principal de Cierre -->
+            <div class="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3">
+                <button id="btn-save-only" type="button" class="pill-btn inline-flex items-center justify-center px-4 py-3 rounded-xl text-sm font-semibold bg-slate-800 hover:bg-slate-700 text-white shadow-sm">
+                    <svg class="w-4 h-4 mr-2 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path>
+                    </svg>
+                    Guardar en Registro Local
+                </button>
+
+                <button id="btn-generate-pdf-bottom" type="button" class="pill-btn inline-flex items-center justify-center px-5 py-3 rounded-xl text-sm font-bold bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-md">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    Guardar y Generar PDF Oficial (PEV-01/F06)
+                </button>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- ===================================================================== -->
+    <!-- MODAL: HISTORIAL / REGISTRO DE INSPECCIONES                           -->
+    <!-- ===================================================================== -->
+    <div id="modal-history" class="hidden fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6">
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
+            <!-- Cabecera Modal -->
+            <div class="px-5 py-4 bg-prace-blue text-white flex items-center justify-between">
+                <div>
+                    <h3 class="text-base font-bold">Historial y Registro de Inspecciones HSEQ</h3>
+                    <p class="text-xs text-slate-300 mt-0.5">Almacenamiento local persistente con exportación a Excel y copia JSON</p>
+                </div>
+                <button type="button" onclick="toggleModal('modal-history', false)" class="p-1.5 rounded-lg hover:bg-slate-800 text-slate-300 hover:text-white">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Barra Herramientas Backup / Excel -->
+            <div class="px-5 py-3 bg-slate-50 border-b border-slate-200 flex flex-wrap items-center justify-between gap-2">
+                <div class="flex flex-wrap items-center gap-2">
+                    <button id="btn-export-history-excel" type="button" class="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white shadow-sm">
+                        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                        Exportar Resumen Excel (.xlsx)
+                    </button>
+                    <button id="btn-export-json" type="button" class="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold bg-white border border-slate-300 hover:bg-slate-100 text-slate-700">
+                        Descargar Backup JSON
+                    </button>
+                    <label class="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 cursor-pointer">
+                        Importar Backup JSON
+                        <input id="input-import-json" type="file" accept=".json" class="hidden">
+                    </label>
+                </div>
+                <span id="history-summary-text" class="text-xs font-mono text-slate-500">0 actas registradas</span>
+            </div>
+
+            <!-- Lista de Registros -->
+            <div id="history-list-container" class="flex-1 overflow-y-auto p-5 space-y-3">
+                <!-- Renderizado dinámico -->
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- MODAL: CONFIGURACIÓN CLOUD (GOOGLE DRIVE / SHEETS APPS SCRIPT)        -->
+    <!-- ===================================================================== -->
+    <div id="modal-cloud" class="hidden fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6">
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden">
+            <div class="px-5 py-4 bg-slate-900 text-white flex items-center justify-between">
+                <div class="flex items-center space-x-2">
+                    <svg class="w-5 h-5 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"></path>
+                    </svg>
+                    <h3 class="text-base font-bold">Sincronización Cloud (Google Drive + Google Sheets)</h3>
+                </div>
+                <button type="button" onclick="toggleModal('modal-cloud', false)" class="p-1.5 rounded-lg hover:bg-slate-800 text-slate-300 hover:text-white">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="flex-1 overflow-y-auto p-5 space-y-4 text-xs sm:text-sm">
+                <p class="text-slate-600 leading-relaxed">
+                    Si deseas que cada vez que pulses <strong>"Generar PDF Oficial"</strong> la aplicación suba automáticamente el PDF a una carpeta de tu <strong>Google Drive</strong> y añada una fila de registro en <strong>Google Sheets</strong>, pega aquí la URL de tu <em>Google Apps Script Web App</em>:
+                </p>
+
+                <div>
+                    <label for="cloud-webhook-url" class="block text-xs font-bold uppercase text-slate-700 mb-1">URL del Webhook (Google Apps Script Web App)</label>
+                    <div class="flex flex-col sm:flex-row gap-2">
+                        <input id="cloud-webhook-url" type="url" placeholder="https://script.google.com/macros/s/AKfycb.../exec" class="flex-1 px-3 py-2 text-xs font-mono border border-slate-300 rounded-lg focus:ring-2 focus:ring-sky-500">
+                        <button id="btn-save-cloud-url" type="button" class="px-4 py-2 rounded-lg text-xs font-bold bg-sky-600 hover:bg-sky-500 text-white">
+                            Guardar URL
+                        </button>
+                    </div>
+                </div>
+
+                <div class="bg-slate-900 text-slate-200 rounded-xl p-4 space-y-2">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-sky-400 uppercase">Código listo para copiar en Google Apps Script</span>
+                        <button id="btn-copy-gas" type="button" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-white border border-slate-600">
+                            Copiar código
+                        </button>
+                    </div>
+                    <pre id="gas-code-block" class="text-[11px] font-mono overflow-x-auto text-emerald-300 leading-relaxed select-all">function doPost(e) {
+  try {
+    var data = JSON.parse(e.postData.contents);
+    // 1. Guardar PDF en carpeta raíz o específica de Google Drive
+    var folderName = "Actas_Inspeccion_HSEQ_Prace";
+    var folders = DriveApp.getFoldersByName(folderName);
+    var folder = folders.hasNext() ? folders.next() : DriveApp.createFolder(folderName);
+
+    var pdfBlob = Utilities.newBlob(
+      Utilities.base64Decode(data.pdfBase64),
+      "application/pdf",
+      data.fileName
+    );
+    var file = folder.createFile(pdfBlob);
+
+    // 2. Registrar fila en la hoja activa de Google Sheets
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var sheet = ss.getSheets()[0];
+    if (sheet.getLastRow() === 0) {
+      sheet.appendRow(["Timestamp", "Fecha Inspección", "Obra", "Jefe Obra", "Inspector", "Total NC", "Observaciones", "Enlace PDF Drive"]);
+    }
+    sheet.appendRow([
+      new Date(),
+      data.fecha,
+      data.obra,
+      data.jefeObra,
+      data.inspector,
+      data.ncCount,
+      data.observaciones,
+      file.getUrl()
+    ]);
+
+    return ContentService.createTextOutput(JSON.stringify({ status: "ok", url: file.getUrl() }))
+      .setMimeType(ContentService.MimeType.JSON);
+  } catch (err) {
+    return ContentService.createTextOutput(JSON.stringify({ status: "error", message: err.toString() }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}</pre>
+                    <p class="text-[11px] text-slate-400">
+                        Instrucciones: Abre una hoja de Google Sheets → <strong>Extensiones → Apps Script</strong> → pega este código → <strong>Implementar → Nueva implementación → Aplicación web</strong> (Ejecutar como: <em>Yo</em>, Quién tiene acceso: <em>Cualquier usuario</em>) y copia la URL resultante.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- PLANTILLA OFICIAL OCULTA PARA EXPORTACIÓN PDF A4 (PEV-01/F06 ED. 3)   -->
+    <!-- ===================================================================== -->
+    <div id="pdf-template-wrapper">
+        <div id="pdf-printable-content">
+            <!-- Renderizado dinámicamente justo antes de generar el PDF -->
+        </div>
+    </div>
+
+    <script>
+        /**
+         * DEFINICIÓN EXACTA Y LITERAL DE LOS 7 BLOQUES Y 46 ÍTEMS DEL FORMATO PEV-01/F06 ED. 3
+         */
+        const HSEQ_SCHEMA = [
+            {
+                id: 'epis',
+                shortTitle: '1. EPIs',
+                title: 'EPIS Y ROPA DE TRABAJO',
+                columns: [
+                    { key: 'estado', label: 'BUEN ESTADO', options: ['SI', 'NO'] },
+                    { key: 'uso', label: 'UTILIZACIÓN', options: ['SI', 'NO', 'NA'] }
+                ],
+                items: [
+                    'CASCO',
+                    'BOTAS',
+                    'GUANTES',
+                    'TAPONES',
+                    'GAFAS',
+                    'MASCARILLA',
+                    'PANTALLA FACIAL Y MANDIL DE SOLDADOR',
+                    'ARNÉS',
+                    'DOBLE GANCHO',
+                    'FAENA/MONO'
+                ]
+            },
+            {
+                id: 'senalizacion',
+                shortTitle: '2. Señalización',
+                title: 'SEÑALIZACIÓN EMERGENCIA',
+                columns: [
+                    { key: 'estado', label: 'BUEN ESTADO', options: ['SI', 'NO'] },
+                    { key: 'uso', label: 'UTILIZACIÓN', options: ['SI', 'NO', 'NA'] }
+                ],
+                items: [
+                    'EXTINTORES',
+                    'BOTIQUIN',
+                    'BIES',
+                    'RIESGOS A TERCEROS',
+                    'VALLADO OBRA',
+                    'SALIDAS EMERGENCIA'
+                ]
+            },
+            {
+                id: 'herramientas',
+                shortTitle: '3. Herramientas',
+                title: 'HERRAMIENTAS Y MEDIOS AUXILIARES',
+                columns: [
+                    { key: 'estado', label: 'BUEN ESTADO', options: ['SI', 'NO'] },
+                    { key: 'uso', label: 'UTILIZACIÓN', options: ['SI', 'NO', 'NA'] }
+                ],
+                items: [
+                    'HERRAMIENTAS MANUALES',
+                    'HERRAMIENTAS ELECTRICAS',
+                    'GRÚA',
+                    'ESLINGAS',
+                    'VEHÍCULOS/MAQUINARIA',
+                    'CARRETILLA ELEVADORA'
+                ]
+            },
+            {
+                id: 'orden',
+                shortTitle: '4. Orden/Limpieza',
+                title: 'ORDEN Y LIMPIEZA',
+                columns: [
+                    { key: 'estado', label: 'BUEN ESTADO', options: ['SI', 'NO'] },
+                    { key: 'desviacion', label: 'DESVIACIÓN', options: ['SI', 'NO', 'NA'] }
+                ],
+                items: [
+                    'ZONA DE TRABAJO',
+                    'ACOPIO GENERAL'
+                ]
+            },
+            {
+                id: 'condiciones',
+                shortTitle: '5. Cond. Generales',
+                title: 'CONDICIONES GENERALES OBRA',
+                columns: [
+                    { key: 'aceptable', label: 'ACEPTABLE', options: ['SI', 'NO'] },
+                    { key: 'comunicacion', label: 'COMUNICACIÓN CLIENTE', options: ['SI', 'NO', 'NA'] }
+                ],
+                items: [
+                    'RIESGO CAÍDAS MISMO NIVEL',
+                    'RIESGO CAÍDAS DISTINTO NIVEL',
+                    'ILUMINACIÓN',
+                    'SEÑALIZACIÓN/CARTEL OBRA',
+                    'ORDEN Y LIMPIEZA',
+                    'ESCALERAS/ESCALERAS PORTATILES',
+                    'ZANJAS',
+                    'PROTECCIONES COLECTIVAS',
+                    'CONDICIONES METEOROLÓGICAS',
+                    'RUTAS EVACUACIÓN'
+                ]
+            },
+            {
+                id: 'medioambiente',
+                shortTitle: '6. Medioambiente',
+                title: 'MEDIOAMBIENTE',
+                columns: [
+                    { key: 'estado', label: 'BUEN ESTADO', options: ['SI', 'NO', 'NA'] }
+                ],
+                items: [
+                    'EL NÚMERO DE CONTENEDORES EN LA ZONA ES, DE ACUERDO CON LA FRECUENCIA DE RECOGIDA, EL SUFICIENTE PARA EVITAR RESIDUOS ALMACENADOS FUERA DEL CONTENEDOR Y MEZCLAS PROVOCADAS POR FALTA DE CONTENEDORES.',
+                    'EL ESTADO DE CONSERVACIÓN DE LOS CONTENEDORES ES ADECUADO (SEGURIDAD PARA MANIPULACIÓN, CARENCIA DE FUGAS, CARENCIA DE MALOS OLORES, ETC.)',
+                    'EL ESTADO DE LA IDENTIFICACIÓN DE LOS DIFERENTES CONTENEDORES ES CORRECTO',
+                    'LOS CONTENEDORES SITUADOS EN EL EXTERIOR ESTÁN DOTADOS DE TAPA Y TIENEN LAS TAPAS CERRADAS',
+                    'LOS CONTENEDORES QUE HA SIDO RETIRTADOS PARA SU DESCARGA SON DEVUELTOS Y SITUADOS EN EL LUGAR DE ORIGEN',
+                    'EL ESTADO DEL CONTENIDO DE LOS CONTENEDORES ES EL ADECUADO: NO CONTIENEN MEZCLAS INDESEADAS'
+                ]
+            },
+            {
+                id: 'calidad',
+                shortTitle: '7. Calidad/Varios',
+                title: 'CALIDAD / VARIOS',
+                columns: [
+                    { key: 'existe', label: '¿EXISTE?', options: ['SI', 'NO', 'NA'] },
+                    { key: 'cumple', label: '¿SE CUMPLE?', options: ['SI', 'NO', 'NA'] }
+                ],
+                items: [
+                    'LIBRO SUBCONTRATACIÓN',
+                    'DOCUMENTACIÓN SUBCONTRATAS EN OBRA',
+                    'DOCUMENTACIÓN PERSONAL EN OBRA',
+                    'PLANOS',
+                    'PLAN DE MONTAJE ANDAMIO',
+                    'PROCEDIMIENTOS/INSTRUCCIÓN DE TRABAJO',
+                    'PPI',
+                    'CALIBRACION EQUIPOS MEDICIÓN',
+                    'FICHAS TÉCNICAS DE MATERIALES',
+                    'FICHAS DE DATOS DE SEGURIDAD'
+                ]
+            }
+        ];
+
+        const STORAGE_KEYS = {
+            DEFAULTS: 'prace_hseq_defaults_v1',
+            DRAFT: 'prace_hseq_current_draft_v1',
+            HISTORY: 'prace_hseq_history_v1',
+            CLOUD_URL: 'prace_hseq_cloud_url_v1'
+        };
+
+        /**
+         * Estado global en memoria
+         */
+        let AppState = {
+            meta: {
+                obra: 'Obra Ferrol',
+                jefe: 'Manuel Tasende Vilariño',
+                inspector: 'Manuel Tasende Vilariño',
+                fecha: new Date().toISOString().slice(0, 10),
+                observaciones: ''
+            },
+            responses: {}, // { "epis_0": { estado: "SI", uso: "SI", nc: "NO", obs: "", showObs: false } }
+            signatures: {
+                inspector: null,
+                jefe: null
+            }
+        };
+
+        const SignaturePads = {};
+
+        /**
+         * Notificaciones Toast
+         */
+        function showToast(msg, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const el = document.createElement('div');
+            const styles = {
+                info: 'bg-slate-900 text-white border-slate-700',
+                success: 'bg-emerald-800 text-white border-emerald-600',
+                warning: 'bg-amber-800 text-white border-amber-600',
+                error: 'bg-rose-800 text-white border-rose-600'
+            };
+            el.className = `pointer-events-auto px-4 py-3 rounded-xl border shadow-lg text-xs font-medium transition-all duration-200 transform translate-y-2 opacity-0 ${styles[type] || styles.info}`;
+            el.textContent = msg;
+            container.appendChild(el);
+
+            requestAnimationFrame(() => el.classList.remove('translate-y-2', 'opacity-0'));
+            setTimeout(() => {
+                el.classList.add('opacity-0', 'translate-y-2');
+                setTimeout(() => el.remove(), 250);
+            }, 3400);
+        }
+
+        /**
+         * Inicializa estructura de respuestas por defecto
+         */
+        function initEmptyResponses() {
+            const resp = {};
+            HSEQ_SCHEMA.forEach(block => {
+                block.items.forEach((_, idx) => {
+                    const itemKey = `${block.id}_${idx}`;
+                    resp[itemKey] = {
+                        nc: '',
+                        obs: '',
+                        showObs: false,
+                        ncSuggested: false
+                    };
+                    block.columns.forEach(col => {
+                        resp[itemKey][col.key] = '';
+                    });
+                });
+            });
+            return resp;
+        }
+
+        /**
+         * Carga preferencias y borrador guardado si existe
+         */
+        function loadInitialState() {
+            const savedDefaults = JSON.parse(localStorage.getItem(STORAGE_KEYS.DEFAULTS) || 'null');
+            if (savedDefaults) {
+                AppState.meta.obra = savedDefaults.obra || 'Obra Ferrol';
+                AppState.meta.jefe = savedDefaults.jefe || 'Manuel Tasende Vilariño';
+                AppState.meta.inspector = savedDefaults.inspector || 'Manuel Tasende Vilariño';
+            }
+
+            AppState.responses = initEmptyResponses();
+
+            const savedDraft = JSON.parse(localStorage.getItem(STORAGE_KEYS.DRAFT) || 'null');
+            if (savedDraft && savedDraft.responses) {
+                AppState.meta = { ...AppState.meta, ...savedDraft.meta };
+                // Mantener fecha actual si no había fecha guardada
+                if (!AppState.meta.fecha) {
+                    AppState.meta.fecha = new Date().toISOString().slice(0, 10);
+                }
+                Object.keys(AppState.responses).forEach(k => {
+                    if (savedDraft.responses[k]) {
+                        AppState.responses[k] = { ...AppState.responses[k], ...savedDraft.responses[k] };
+                    }
+                });
+                if (savedDraft.signatures) {
+                    AppState.signatures = savedDraft.signatures;
+                }
+            }
+
+            // Sincronizar inputs de metadatos
+            document.getElementById('meta-obra').value = AppState.meta.obra;
+            document.getElementById('meta-jefe').value = AppState.meta.jefe;
+            document.getElementById('meta-inspector').value = AppState.meta.inspector;
+            document.getElementById('meta-fecha').value = AppState.meta.fecha;
+            document.getElementById('meta-observaciones').value = AppState.meta.observaciones || '';
+
+            const cloudUrl = localStorage.getItem(STORAGE_KEYS.CLOUD_URL) || '';
+            document.getElementById('cloud-webhook-url').value = cloudUrl;
+        }
+
+        /**
+         * Guarda automáticamente el borrador y preferencias en localStorage
+         */
+        function persistDraft() {
+            localStorage.setItem(STORAGE_KEYS.DEFAULTS, JSON.stringify({
+                obra: AppState.meta.obra,
+                jefe: AppState.meta.jefe,
+                inspector: AppState.meta.inspector
+            }));
+            localStorage.setItem(STORAGE_KEYS.DRAFT, JSON.stringify(AppState));
+            updateTopMetrics();
+        }
+
+        /**
+         * Renderiza el índice rápido y los 7 bloques táctiles
+         */
+        function renderFormBlocks() {
+            const navContainer = document.getElementById('quick-nav');
+            const blocksContainer = document.getElementById('blocks-container');
+
+            navContainer.innerHTML = HSEQ_SCHEMA.map(b => `
+                <a href="#section-${b.id}" class="shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold bg-white border border-slate-200 text-slate-700 hover:bg-prace-blue hover:text-white transition shadow-xs">
+                    ${b.shortTitle}
+                </a>
+            `).join('');
+
+            blocksContainer.innerHTML = HSEQ_SCHEMA.map((block, bIdx) => {
+                const itemsHtml = block.items.map((itemText, iIdx) => {
+                    const itemKey = `${block.id}_${iIdx}`;
+                    const state = AppState.responses[itemKey];
+                    const isNcYes = state.nc === 'SI';
+                    const isSuggested = state.ncSuggested && state.nc !== 'SI';
+
+                    // Generar grupos de botones táctiles para las columnas del bloque
+                    const colsHtml = block.columns.map(col => {
+                        const currentVal = state[col.key];
+                        const btns = col.options.map(opt => {
+                            const isSelected = currentVal === opt;
+                            let activeClass = 'bg-white text-slate-600 border-slate-300 hover:bg-slate-50';
+                            if (isSelected) {
+                                if (col.key === 'desviacion') {
+                                    activeClass = opt === 'SI'
+                                        ? 'bg-rose-600 text-white border-rose-600 shadow-xs'
+                                        : (opt === 'NO' ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs' : 'bg-slate-600 text-white border-slate-600');
+                                } else {
+                                    activeClass = opt === 'SI'
+                                        ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
+                                        : (opt === 'NO' ? 'bg-rose-600 text-white border-rose-600 shadow-xs' : 'bg-slate-600 text-white border-slate-600');
+                                }
+                            }
+                            return `
+                                <button type="button"
+                                    onclick="handleOptionClick('${block.id}', ${iIdx}, '${col.key}', '${opt}')"
+                                    class="pill-btn min-w-[44px] h-9 px-2.5 rounded-lg border text-xs font-bold ${activeClass}">
+                                    ${opt}
+                                </button>
+                            `;
+                        }).join('');
+
+                        return `
+                            <div class="flex flex-col">
+                                <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">${col.label}</span>
+                                <div class="inline-flex items-center space-x-1">${btns}</div>
+                            </div>
+                        `;
+                    }).join('');
+
+                    // Botones NC (SI / NO)
+                    const ncButtons = ['SI', 'NO'].map(opt => {
+                        const isSelected = state.nc === opt;
+                        let cls = 'bg-white text-slate-600 border-slate-300 hover:bg-slate-50';
+                        if (isSelected) {
+                            cls = opt === 'SI'
+                                ? 'bg-rose-600 text-white border-rose-600 ring-2 ring-rose-300'
+                                : 'bg-slate-700 text-white border-slate-700';
+                        } else if (opt === 'SI' && isSuggested) {
+                            cls = 'bg-amber-100 text-amber-900 border-amber-400 animate-pulse';
+                        }
+                        return `
+                            <button type="button"
+                                onclick="handleNcClick('${block.id}', ${iIdx}, '${opt}')"
+                                class="pill-btn min-w-[44px] h-9 px-2.5 rounded-lg border text-xs font-bold ${cls}">
+                                ${opt}
+                            </button>
+                        `;
+                    }).join('');
+
+                    const showObs = state.showObs || (state.obs && state.obs.trim().length > 0) || isNcYes;
+
+                    return `
+                        <div id="row-${itemKey}" class="p-3.5 sm:p-4 transition-colors ${isNcYes ? 'bg-rose-50/60' : (isSuggested ? 'bg-amber-50/50' : 'bg-white hover:bg-slate-50/70')}">
+                            <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+                                <!-- Nombre del Ítem -->
+                                <div class="flex-1 pr-2">
+                                    <div class="flex items-start space-x-2">
+                                        <span class="font-mono text-[11px] font-bold text-slate-400 mt-0.5">${String(iIdx + 1).padStart(2, '0')}</span>
+                                        <p class="text-xs sm:text-sm font-semibold text-slate-800 leading-snug">${itemText}</p>
+                                    </div>
+                                    ${isSuggested ? `<p class="text-[11px] font-semibold text-amber-700 mt-1 ml-6">⚠ Desviación detectada: ¿Deseas marcar NC = SI y detallar observación?</p>` : ''}
+                                </div>
+
+                                <!-- Controles Táctiles (Estado, Uso/Cumple, NC, Botón Obs) -->
+                                <div class="flex flex-wrap items-end gap-3 ml-6 lg:ml-0">
+                                    ${colsHtml}
+
+                                    <div class="flex flex-col">
+                                        <span class="text-[10px] font-bold uppercase tracking-wider ${isNcYes ? 'text-rose-600' : 'text-slate-500'} mb-1">NC</span>
+                                        <div class="inline-flex items-center space-x-1">${ncButtons}</div>
+                                    </div>
+
+                                    <button type="button"
+                                        onclick="toggleItemObs('${itemKey}')"
+                                        title="Añadir o ver observaciones"
+                                        class="pill-btn h-9 px-2.5 rounded-lg border text-xs font-semibold inline-flex items-center ${showObs ? 'bg-prace-light border-prace-accent text-prace-blue' : 'bg-white border-slate-300 text-slate-500 hover:text-slate-800'}">
+                                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                        </svg>
+                                        Obs.
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Campo Desplegable de Observaciones -->
+                            <div class="${showObs ? 'block' : 'hidden'} mt-2.5 ml-6">
+                                <input type="text"
+                                    value="${escapeHtmlAttr(state.obs)}"
+                                    oninput="updateItemObs('${itemKey}', this.value)"
+                                    placeholder="Escribir observación o acción correctora..."
+                                    class="w-full px-3 py-2 text-xs border ${isNcYes ? 'border-rose-300 bg-white' : 'border-slate-300 bg-slate-50 focus:bg-white'} rounded-lg focus:ring-2 focus:ring-prace-accent">
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                return `
+                    <section id="section-${block.id}" class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden scroll-mt-24">
+                        <div class="bg-prace-blue text-white px-4 py-3 flex items-center justify-between">
+                            <div class="flex items-center space-x-2">
+                                <span class="bg-white/15 text-white font-mono text-xs font-bold px-2 py-0.5 rounded">${bIdx + 1}/7</span>
+                                <h2 class="text-xs sm:text-sm font-bold tracking-wide uppercase">${block.title}</h2>
+                            </div>
+                            <button type="button" onclick="markBlockOk('${block.id}')" class="pill-btn text-[11px] font-semibold bg-white/10 hover:bg-emerald-600 text-white px-2.5 py-1 rounded-md border border-white/20 transition">
+                                Todo bloque OK
+                            </button>
+                        </div>
+                        <div class="divide-y divide-slate-200">
+                            ${itemsHtml}
+                        </div>
+                    </section>
+                `;
+            }).join('');
+
+            updateTopMetrics();
+        }
+
+        function escapeHtmlAttr(str) {
+            if (!str) return '';
+            return String(str).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        }
+
+        /**
+         * Lógica inteligente al pulsar SI / NO / NA en cualquier columna
+         */
+        function handleOptionClick(blockId, itemIdx, colKey, value) {
+            const itemKey = `${blockId}_${itemIdx}`;
+            const state = AppState.responses[itemKey];
+
+            // Toggle si pulsa el mismo valor ya activo
+            state[colKey] = (state[colKey] === value) ? '' : value;
+
+            // Evaluar si existe anomalía que sugiera No Conformidad (NC)
+            const hasAnomaly = (
+                (colKey !== 'desviacion' && state[colKey] === 'NO') ||
+                (colKey === 'desviacion' && state[colKey] === 'SI')
+            );
+
+            if (hasAnomaly) {
+                state.ncSuggested = true;
+                state.showObs = true;
+                if (!state.nc) state.nc = 'SI'; // Pre-sugerir NC = SI automáticamente para agilizar en obra
+            } else {
+                // Comprobar si todas las columnas evaluadas están correctas
+                const block = HSEQ_SCHEMA.find(b => b.id === blockId);
+                const anyBad = block.columns.some(c => {
+                    const v = state[c.key];
+                    return (c.key === 'desviacion' && v === 'SI') || (c.key !== 'desviacion' && v === 'NO');
+                });
+                if (!anyBad) {
+                    state.ncSuggested = false;
+                    if (state.nc === 'SI' && !state.obs) {
+                        state.nc = 'NO';
+                    }
+                }
+            }
+
+            // Si no tiene NC explícita aún y todo está bien, marcar NC = NO automáticamente
+            if (!state.nc && state[colKey] !== '') {
+                state.nc = hasAnomaly ? 'SI' : 'NO';
+            }
+
+            persistDraft();
+            renderFormBlocks();
+        }
+
+        function handleNcClick(blockId, itemIdx, value) {
+            const itemKey = `${blockId}_${itemIdx}`;
+            const state = AppState.responses[itemKey];
+            state.nc = (state.nc === value) ? '' : value;
+            if (state.nc === 'SI') {
+                state.showObs = true;
+            }
+            persistDraft();
+            renderFormBlocks();
+        }
+
+        function toggleItemObs(itemKey) {
+            AppState.responses[itemKey].showObs = !AppState.responses[itemKey].showObs;
+            renderFormBlocks();
+        }
+
+        function updateItemObs(itemKey, val) {
+            AppState.responses[itemKey].obs = val;
+            persistDraft();
+        }
+
+        /**
+         * Marca todo un bloque o toda el acta como OK (SI / NO desviación / NC = NO)
+         */
+        function markBlockOk(blockId) {
+            const block = HSEQ_SCHEMA.find(b => b.id === blockId);
+            if (!block) return;
+
+            block.items.forEach((_, idx) => {
+                const itemKey = `${block.id}_${idx}`;
+                const state = AppState.responses[itemKey];
+                block.columns.forEach(col => {
+                    state[col.key] = (col.key === 'desviacion') ? 'NO' : 'SI';
+                });
+                state.nc = 'NO';
+                state.ncSuggested = false;
+            });
+
+            persistDraft();
+            renderFormBlocks();
+            showToast(`Bloque "${block.shortTitle}" marcado como conforme.`, 'success');
+        }
+
+        function markAllOk() {
+            HSEQ_SCHEMA.forEach(block => {
+                block.items.forEach((_, idx) => {
+                    const itemKey = `${block.id}_${idx}`;
+                    const state = AppState.responses[itemKey];
+                    block.columns.forEach(col => {
+                        state[col.key] = (col.key === 'desviacion') ? 'NO' : 'SI';
+                    });
+                    state.nc = 'NO';
+                    state.ncSuggested = false;
+                });
+            });
+            persistDraft();
+            renderFormBlocks();
+            showToast('Los 46 ítems del acta se han marcado como conformes (OK).', 'success');
+        }
+
+        /**
+         * Actualiza contador de progreso y No Conformidades en la barra fija
+         */
+        function updateTopMetrics() {
+            let totalItems = 0;
+            let completedItems = 0;
+            let ncCount = 0;
+
+            HSEQ_SCHEMA.forEach(block => {
+                block.items.forEach((_, idx) => {
+                    totalItems++;
+                    const state = AppState.responses[`${block.id}_${idx}`];
+                    const hasAnyAnswer = block.columns.some(c => state[c.key] !== '');
+                    if (hasAnyAnswer) completedItems++;
+                    if (state.nc === 'SI') ncCount++;
+                });
+            });
+
+            const pct = Math.round((completedItems / totalItems) * 100);
+            document.getElementById('header-progress').textContent = `${completedItems}/${totalItems} ítems (${pct}%)`;
+            document.getElementById('progress-bar-fill').style.width = `${pct}%`;
+
+            const ncBadge = document.getElementById('header-nc-badge');
+            ncBadge.textContent = `${ncCount} NC`;
+            ncBadge.className = ncCount > 0
+                ? 'font-mono font-bold text-rose-400 bg-rose-950/70 px-1.5 py-0.5 rounded'
+                : 'font-mono font-bold text-emerald-400';
+
+            const history = getHistoryList();
+            document.getElementById('history-count-badge').textContent = history.length;
+        }
+
+        /**
+         * ===================================================================
+         * PANELES DE FIRMA TÁCTIL HTML5 CANVAS
+         * ===================================================================
+         */
+        function initSignaturePads() {
+            ['inspector', 'jefe'].forEach(role => {
+                const canvas = document.getElementById(`sig-${role}`);
+                const ctx = canvas.getContext('2d');
+                let drawing = false;
+
+                function resizeCanvas() {
+                    const rect = canvas.getBoundingClientRect();
+                    if (rect.width === 0 || rect.height === 0) return;
+                    const tempData = AppState.signatures[role];
+                    canvas.width = rect.width * 2;
+                    canvas.height = rect.height * 2;
+                    ctx.scale(2, 2);
+                    ctx.lineCap = 'round';
+                    ctx.lineJoin = 'round';
+                    ctx.lineWidth = 2.2;
+                    ctx.strokeStyle = '#0f172a';
+
+                    if (tempData) {
+                        const img = new Image();
+                        img.onload = () => ctx.drawImage(img, 0, 0, rect.width, rect.height);
+                        img.src = tempData;
+                    }
+                }
+
+                function getPos(e) {
+                    const rect = canvas.getBoundingClientRect();
+                    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                    return {
+                        x: clientX - rect.left,
+                        y: clientY - rect.top
+                    };
+                }
+
+                function startDraw(e) {
+                    drawing = true;
+                    const pos = getPos(e);
+                    ctx.beginPath();
+                    ctx.moveTo(pos.x, pos.y);
+                }
+
+                function moveDraw(e) {
+                    if (!drawing) return;
+                    if (e.cancelable) e.preventDefault();
+                    const pos = getPos(e);
+                    ctx.lineTo(pos.x, pos.y);
+                    ctx.stroke();
+                }
+
+                function endDraw() {
+                    if (!drawing) return;
+                    drawing = false;
+                    AppState.signatures[role] = canvas.toDataURL('image/png');
+                    persistDraft();
+                }
+
+                canvas.addEventListener('mousedown', startDraw);
+                canvas.addEventListener('mousemove', moveDraw);
+                window.addEventListener('mouseup', endDraw);
+
+                canvas.addEventListener('touchstart', startDraw, { passive: false });
+                canvas.addEventListener('touchmove', moveDraw, { passive: false });
+                canvas.addEventListener('touchend', endDraw);
+
+                SignaturePads[role] = { canvas, ctx, resizeCanvas };
+                resizeCanvas();
+            });
+
+            window.addEventListener('resize', () => {
+                SignaturePads.inspector.resizeCanvas();
+                SignaturePads.jefe.resizeCanvas();
+            });
+        }
+
+        function clearSignature(role) {
+            const pad = SignaturePads[role];
+            if (!pad) return;
+            const rect = pad.canvas.getBoundingClientRect();
+            pad.ctx.clearRect(0, 0, rect.width, rect.height);
+            AppState.signatures[role] = null;
+            persistDraft();
+        }
+
+        /**
+         * ===================================================================
+         * CONSTRUCCIÓN DE PLANTILLA OFICIAL A4 Y EXPORTACIÓN PDF (PEV-01/F06)
+         * ===================================================================
+         */
+        function formatSpanishDate(isoDate) {
+            if (!isoDate) return '';
+            const parts = isoDate.split('-');
+            if (parts.length !== 3) return isoDate;
+            return `${parts[2]}/${parts[1]}/${parts[0]}`;
+        }
+
+        function buildOfficialPdfHtml(record) {
+            const { meta, responses, signatures } = record;
+            const fechaFormatted = formatSpanishDate(meta.fecha);
+
+            // Cabecera oficial repetible en Página 1 y Página 2
+            const renderHeader = (edLabel = 'ED. 3') => `
+                <table class="official-table" style="margin-bottom: 6px;">
+                    <tr>
+                        <td style="width: 24%; padding: 4px 6px;">
+                            <div style="font-size: 7pt; margin-bottom: 2px;"><strong>OBRA:</strong> ${escapeHtmlAttr(meta.obra)}</div>
+                            <div style="font-size: 7pt; margin-bottom: 2px;"><strong>JEFE OBRA:</strong> ${escapeHtmlAttr(meta.jefe)}</div>
+                            <div style="font-size: 7pt;"><strong>FECHA:</strong> ${fechaFormatted}</div>
+                        </td>
+                        <td style="width: 52%; text-align: center; padding: 4px;">
+                            <div style="display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 2px;">
+                                <!-- Logotipo vectorial estilizado PRACE -->
+                                <svg width="78" height="22" viewBox="0 0 120 34" xmlns="http://www.w3.org/2000/svg">
+                                    <rect x="0" y="2" width="118" height="30" rx="3" fill="#0f294a"/>
+                                    <polygon points="8,26 18,8 28,26" fill="#d97706"/>
+                                    <text x="34" y="23" fill="#ffffff" font-family="Arial, sans-serif" font-weight="900" font-size="18" letter-spacing="1.5">PRACE</text>
+                                </svg>
+                                <span style="font-size: 7pt; font-weight: 700; color: #0f294a; border: 1px solid #0f294a; padding: 1px 4px; border-radius: 2px;">efr</span>
+                            </div>
+                            <div style="font-size: 10.5pt; font-weight: 800; color: #0f172a; letter-spacing: 0.3px;">
+                                ACTA DE INSPECCIÓN HSEQ - EN OBRA
+                            </div>
+                        </td>
+                        <td style="width: 24%; text-align: center; font-weight: 700; font-size: 8.5pt;">
+                            <div>PEV-01/F06</div>
+                            <div style="margin-top: 4px; font-size: 8pt;">${edLabel}</div>
+                        </td>
+                    </tr>
+                </table>
+            `;
+
+            // Helper para generar filas de bloques de 2 columnas de evaluación (Bloques 1, 2, 3, 4, 5, 7)
+            const renderTwoColBlock = (blockId, col1Title, col1Opts, col2Title, col2Opts) => {
+                const block = HSEQ_SCHEMA.find(b => b.id === blockId);
+                const c1Key = block.columns[0].key;
+                const c2Key = block.columns[1].key;
+
+                const col1Headers = col1Opts.map(o => `<th style="width: 3.4%;">${o}</th>`).join('');
+                const col2Headers = col2Opts.map(o => `<th style="width: 3.4%;">${o}</th>`).join('');
+
+                const rowsHtml = block.items.map((itemText, idx) => {
+                    const st = responses[`${block.id}_${idx}`] || {};
+                    const c1Cells = col1Opts.map(o => `<td class="cell-x">${st[c1Key] === o ? 'X' : ''}</td>`).join('');
+                    const c2Cells = col2Opts.map(o => `<td class="cell-x">${st[c2Key] === o ? 'X' : ''}</td>`).join('');
+                    return `
+                        <tr>
+                            <td style="font-weight: 500;">${itemText}</td>
+                            ${c1Cells}
+                            ${c2Cells}
+                            <td>${escapeHtmlAttr(st.obs || '')}</td>
+                            <td class="cell-x">${st.nc === 'SI' ? 'X' : ''}</td>
+                            <td class="cell-x">${st.nc === 'NO' ? 'X' : ''}</td>
+                        </tr>
+                    `;
+                }).join('');
+
+                return `
+                    <table class="official-table">
+                        <thead>
+                            <tr>
+                                <th rowspan="2" class="section-title" style="width: 36%;">${block.title}</th>
+                                <th colspan="${col1Opts.length}">${col1Title}</th>
+                                <th colspan="${col2Opts.length}">${col2Title}</th>
+                                <th rowspan="2" style="width: 39.2%;">OBSERVACIONES</th>
+                                <th colspan="2" style="width: 6.8%;">NC</th>
+                            </tr>
+                            <tr>
+                                ${col1Headers}
+                                ${col2Headers}
+                                <th style="width: 3.4%;">SI</th>
+                                <th style="width: 3.4%;">NO</th>
+                            </tr>
+                        </thead>
+                        <tbody>${rowsHtml}</tbody>
+                    </table>
+                `;
+            };
+
+            // Bloque 6 (Medioambiente - 1 grupo de 3 columnas SI / NO / NA)
+            const renderMedioambienteBlock = () => {
+                const block = HSEQ_SCHEMA.find(b => b.id === 'medioambiente');
+                const rowsHtml = block.items.map((itemText, idx) => {
+                    const st = responses[`medioambiente_${idx}`] || {};
+                    return `
+                        <tr>
+                            <td style="font-size: 6.7pt; line-height: 1.12;">${itemText}</td>
+                            <td class="cell-x">${st.estado === 'SI' ? 'X' : ''}</td>
+                            <td class="cell-x">${st.estado === 'NO' ? 'X' : ''}</td>
+                            <td class="cell-x">${st.estado === 'NA' ? 'X' : ''}</td>
+                            <td>${escapeHtmlAttr(st.obs || '')}</td>
+                            <td class="cell-x">${st.nc === 'SI' ? 'X' : ''}</td>
+                            <td class="cell-x">${st.nc === 'NO' ? 'X' : ''}</td>
+                        </tr>
+                    `;
+                }).join('');
+
+                return `
+                    <table class="official-table">
+                        <thead>
+                            <tr>
+                                <th rowspan="2" class="section-title" style="width: 48%;">MEDIOAMBIENTE</th>
+                                <th colspan="3" style="width: 10.2%;">BUEN ESTADO</th>
+                                <th rowspan="2" style="width: 35%;">OBSERVACIONES</th>
+                                <th colspan="2" style="width: 6.8%;">NC</th>
+                            </tr>
+                            <tr>
+                                <th style="width: 3.4%;">SI</th>
+                                <th style="width: 3.4%;">NO</th>
+                                <th style="width: 3.4%;">NA</th>
+                                <th style="width: 3.4%;">SI</th>
+                                <th style="width: 3.4%;">NO</th>
+                            </tr>
+                        </thead>
+                        <tbody>${rowsHtml}</tbody>
+                    </table>
+                `;
+            };
+
+            const sigInspectorImg = signatures && signatures.inspector
+                ? `<img src="${signatures.inspector}" style="max-height: 44px; max-width: 150px; display: block; margin: 2px auto;" />`
+                : '<div style="height: 44px;"></div>';
+
+            const sigJefeImg = signatures && signatures.jefe
+                ? `<img src="${signatures.jefe}" style="max-height: 44px; max-width: 150px; display: block; margin: 2px auto;" />`
+                : '<div style="height: 44px;"></div>';
+
+            // Distribución equilibrada en 2 hojas A4 completas (sin hojas en blanco sobrantes)
+            return `
+                <!-- PÁGINA 1: Cabecera + Bloques 1, 2, 3, 4 y 5 -->
+                <div class="official-sheet">
+                    ${renderHeader('ED. 3')}
+                    ${renderTwoColBlock('epis', 'BUEN ESTADO', ['SI', 'NO'], 'UTILIZACIÓN', ['SI', 'NO', 'NA'])}
+                    ${renderTwoColBlock('senalizacion', 'BUEN ESTADO', ['SI', 'NO'], 'UTILIZACIÓN', ['SI', 'NO', 'NA'])}
+                    ${renderTwoColBlock('herramientas', 'BUEN ESTADO', ['SI', 'NO'], 'UTILIZACIÓN', ['SI', 'NO', 'NA'])}
+                    ${renderTwoColBlock('orden', 'BUEN ESTADO', ['SI', 'NO'], 'DESVIACIÓN', ['SI', 'NO', 'NA'])}
+                    ${renderTwoColBlock('condiciones', 'ACEPTABLE', ['SI', 'NO'], 'COMUNICACIÓN CLIENTE', ['SI', 'NO', 'NA'])}
+                    <div style="font-size: 6.8pt; font-weight: 700; color: #334155; margin-top: 2px;">NA: NO APLICA</div>
+                </div>
+
+                <!-- PÁGINA 2: Cabecera + Bloque 6 (Medioambiente) + Bloque 7 (Calidad/Varios) + Cierre y Firmas -->
+                <div class="official-sheet page-break-before">
+                    ${renderHeader('ED. 3')}
+                    ${renderMedioambienteBlock()}
+                    ${renderTwoColBlock('calidad', '¿EXISTE?', ['SI', 'NO', 'NA'], '¿SE CUMPLE?', ['SI', 'NO', 'NA'])}
+
+                    <!-- Cuadro de Observaciones Generales -->
+                    <table class="official-table" style="margin-top: 6px;">
+                        <tr>
+                            <td style="height: 62px; vertical-align: top; padding: 5px 6px;">
+                                <div style="font-weight: 700; font-size: 7.5pt; margin-bottom: 3px;">OBSERVACIONES:</div>
+                                <div style="font-size: 7.5pt; white-space: pre-wrap;">${escapeHtmlAttr(meta.observaciones || '')}</div>
+                            </td>
+                        </tr>
+                    </table>
+
+                    <!-- Cuadro de Firmas y Vº Bº -->
+                    <table class="official-table" style="margin-top: 6px;">
+                        <tr>
+                            <td style="width: 55%; vertical-align: top; padding: 6px;">
+                                <div style="margin-bottom: 4px;"><strong>INSPECCIONADO POR:</strong> ${escapeHtmlAttr(meta.inspector)}</div>
+                                <div style="margin-bottom: 4px;"><strong>FECHA:</strong> ${fechaFormatted}</div>
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <strong>FIRMA:</strong>
+                                    <div style="flex: 1; text-align: center;">${sigInspectorImg}</div>
+                                </div>
+                            </td>
+                            <td style="width: 45%; vertical-align: top; text-align: center; padding: 6px;">
+                                <div style="font-weight: 700; font-size: 7.4pt; margin-bottom: 2px;">Vº Bº JEFE DE OBRA/JEFE EQUIPO/ENCARGADO</div>
+                                ${sigJefeImg}
+                            </td>
+                        </tr>
+                    </table>
+                    <div style="font-size: 6.8pt; font-weight: 700; color: #334155; margin-top: 3px;">NA: NO APLICA</div>
+                </div>
+            `;
+        }
+
+        /**
+         * Genera el PDF oficial, guarda en registro local y dispara Cloud Webhook si está configurado
+         */
+        async function generateAndSaveInspection(downloadPdf = true) {
+            // Sincronizar campos de texto actuales
+            AppState.meta.obra = document.getElementById('meta-obra').value.trim() || 'Sin especificar';
+            AppState.meta.jefe = document.getElementById('meta-jefe').value.trim();
+            AppState.meta.inspector = document.getElementById('meta-inspector').value.trim();
+            AppState.meta.fecha = document.getElementById('meta-fecha').value || new Date().toISOString().slice(0, 10);
+            AppState.meta.observaciones = document.getElementById('meta-observaciones').value.trim();
+
+            // Contar NC totales
+            let ncCount = 0;
+            Object.values(AppState.responses).forEach(r => {
+                if (r.nc === 'SI') ncCount++;
+            });
+
+            const record = {
+                id: 'acta_' + Date.now(),
+                createdAt: new Date().toISOString(),
+                ncCount,
+                meta: JSON.parse(JSON.stringify(AppState.meta)),
+                responses: JSON.parse(JSON.stringify(AppState.responses)),
+                signatures: JSON.parse(JSON.stringify(AppState.signatures))
+            };
+
+            // Guardar en historial local
+            saveRecordToHistory(record);
+            updateTopMetrics();
+
+            if (!downloadPdf) {
+                showToast('Inspección guardada en el Registro Histórico local.', 'success');
+                return;
+            }
+
+            showToast('Generando PDF oficial PEV-01/F06...', 'info');
+            await exportRecordToPdf(record, true);
+        }
+
+        async function exportRecordToPdf(record, triggerCloud = false) {
+            const container = document.getElementById('pdf-printable-content');
+            container.innerHTML = buildOfficialPdfHtml(record);
+
+            const cleanObra = record.meta.obra.replace(/[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑ_-]/g, '_');
+            const fileName = `PEV-01-F06_Acta_HSEQ_${cleanObra}_${record.meta.fecha}.pdf`;
+
+            const opt = {
+                margin: 0,
+                filename: fileName,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, useCORS: true, logging: false },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+                pagebreak: { mode: ['css', 'legacy'] }
+            };
+
+            try {
+                // Generar instancia worker de html2pdf
+                const worker = html2pdf().set(opt).from(container);
+                await worker.save();
+                showToast(`PDF descargado: ${fileName}`, 'success');
+
+                // Si hay Webhook Cloud configurado, enviar copia en segundo plano
+                const cloudUrl = localStorage.getItem(STORAGE_KEYS.CLOUD_URL);
+                if (triggerCloud && cloudUrl) {
+                    const pdfDataUri = await worker.outputPdf('datauristring');
+                    const base64 = pdfDataUri.split(',')[1];
+                    sendToCloudWebhook(cloudUrl, {
+                        fileName,
+                        pdfBase64: base64,
+                        fecha: record.meta.fecha,
+                        obra: record.meta.obra,
+                        jefeObra: record.meta.jefe,
+                        inspector: record.meta.inspector,
+                        ncCount: record.ncCount,
+                        observaciones: record.meta.observaciones
+                    });
+                }
+            } catch (err) {
+                console.error(err);
+                showToast('Error al generar el PDF.', 'error');
+            }
+        }
+
+        async function sendToCloudWebhook(url, payload) {
+            try {
+                showToast('Sincronizando PDF y registro con Google Drive / Sheets...', 'info');
+                await fetch(url, {
+                    method: 'POST',
+                    mode: 'no-cors', // Apps Script Web App acepta POST opaco sin bloqueo CORS
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                showToast('Enviado a Google Drive / Sheets correctamente.', 'success');
+            } catch (err) {
+                console.error(err);
+                showToast('No se pudo conectar con el Webhook Cloud. El registro local está a salvo.', 'warning');
+            }
+        }
+
+        /**
+         * ===================================================================
+         * GESTIÓN DE HISTORIAL LOCAL, BACKUP JSON Y EXPORTACIÓN EXCEL
+         * ===================================================================
+         */
+        function getHistoryList() {
+            try {
+                return JSON.parse(localStorage.getItem(STORAGE_KEYS.HISTORY) || '[]');
+            } catch {
+                return [];
+            }
+        }
+
+        function saveRecordToHistory(record) {
+            const list = getHistoryList();
+            list.unshift(record); // Más reciente primero
+            localStorage.setItem(STORAGE_KEYS.HISTORY, JSON.stringify(list));
+        }
+
+        function renderHistoryModal() {
+            const list = getHistoryList();
+            const container = document.getElementById('history-list-container');
+            document.getElementById('history-summary-text').textContent = `${list.length} actas registradas`;
+
+            if (list.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-12 text-slate-500">
+                        <p class="text-sm font-semibold">No hay inspecciones guardadas todavía</p>
+                        <p class="text-xs mt-1">Al pulsar "Guardar en Registro Local" o "Generar PDF Oficial", cada acta quedará archivada aquí.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = list.map(rec => {
+                const ncBadge = rec.ncCount > 0
+                    ? `<span class="px-2 py-0.5 rounded text-xs font-bold bg-rose-100 text-rose-800 border border-rose-200">${rec.ncCount} NC</span>`
+                    : `<span class="px-2 py-0.5 rounded text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">0 NC (Conforme)</span>`;
+
+                return `
+                    <div class="border border-slate-200 rounded-xl p-4 bg-white hover:border-slate-300 transition flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div>
+                            <div class="flex items-center space-x-2">
+                                <span class="font-mono text-xs font-bold text-prace-blue bg-prace-light px-2 py-0.5 rounded">${formatSpanishDate(rec.meta.fecha)}</span>
+                                <h4 class="text-sm font-bold text-slate-900">${escapeHtmlAttr(rec.meta.obra)}</h4>
+                                ${ncBadge}
+                            </div>
+                            <p class="text-xs text-slate-500 mt-1">
+                                Inspector: <strong class="text-slate-700">${escapeHtmlAttr(rec.meta.inspector)}</strong> • Jefe Obra: ${escapeHtmlAttr(rec.meta.jefe)}
+                            </p>
+                            ${rec.meta.observaciones ? `<p class="text-xs text-slate-600 italic mt-1 line-clamp-1">"${escapeHtmlAttr(rec.meta.observaciones)}"</p>` : ''}
+                        </div>
+
+                        <div class="flex flex-wrap items-center gap-1.5 shrink-0">
+                            <button type="button" onclick="reDownloadPdf('${rec.id}')" class="px-2.5 py-1.5 rounded-lg text-xs font-bold bg-amber-500 hover:bg-amber-400 text-slate-950">
+                                PDF Oficial
+                            </button>
+                            <button type="button" onclick="duplicateRecordAsTemplate('${rec.id}')" class="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-white">
+                                Duplicar como plantilla
+                            </button>
+                            <button type="button" onclick="deleteHistoryRecord('${rec.id}')" title="Eliminar registro" class="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function reDownloadPdf(id) {
+            const rec = getHistoryList().find(r => r.id === id);
+            if (!rec) return;
+            exportRecordToPdf(rec, false);
+        }
+
+        function duplicateRecordAsTemplate(id) {
+            const rec = getHistoryList().find(r => r.id === id);
+            if (!rec) return;
+
+            AppState.meta = {
+                ...rec.meta,
+                fecha: new Date().toISOString().slice(0, 10)
+            };
+            AppState.responses = JSON.parse(JSON.stringify(rec.responses));
+            AppState.signatures = { inspector: null, jefe: null };
+
+            document.getElementById('meta-obra').value = AppState.meta.obra;
+            document.getElementById('meta-jefe').value = AppState.meta.jefe;
+            document.getElementById('meta-inspector').value = AppState.meta.inspector;
+            document.getElementById('meta-fecha').value = AppState.meta.fecha;
+            document.getElementById('meta-observaciones').value = AppState.meta.observaciones || '';
+
+            clearSignature('inspector');
+            clearSignature('jefe');
+            persistDraft();
+            renderFormBlocks();
+            toggleModal('modal-history', false);
+            showToast('Inspección cargada como plantilla con fecha de hoy. Revisa los puntos y firma.', 'info');
+        }
+
+        function deleteHistoryRecord(id) {
+            const updated = getHistoryList().filter(r => r.id !== id);
+            localStorage.setItem(STORAGE_KEYS.HISTORY, JSON.stringify(updated));
+            renderHistoryModal();
+            updateTopMetrics();
+            showToast('Registro eliminado del historial.', 'info');
+        }
+
+        function exportHistoryToExcel() {
+            const list = getHistoryList();
+            if (list.length === 0) {
+                showToast('No hay registros en el historial para exportar.', 'warning');
+                return;
+            }
+
+            const rows = list.map(rec => {
+                // Listar textos de ítems con NC = SI
+                const ncDetails = [];
+                HSEQ_SCHEMA.forEach(block => {
+                    block.items.forEach((itemText, idx) => {
+                        const st = rec.responses[`${block.id}_${idx}`];
+                        if (st && st.nc === 'SI') {
+                            ncDetails.push(`[${block.shortTitle}] ${itemText}${st.obs ? ': ' + st.obs : ''}`);
+                        }
+                    });
+                });
+
+                return {
+                    'Fecha': formatSpanishDate(rec.meta.fecha),
+                    'Obra': rec.meta.obra,
+                    'Jefe de Obra': rec.meta.jefe,
+                    'Inspeccionado Por': rec.meta.inspector,
+                    'Nº No Conformidades': rec.ncCount,
+                    'Detalle No Conformidades': ncDetails.join(' | ') || 'Ninguna',
+                    'Observaciones Generales': rec.meta.observaciones || ''
+                };
+            });
+
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.json_to_sheet(rows);
+            ws['!cols'] = [
+                { wch: 14 }, { wch: 24 }, { wch: 26 }, { wch: 26 }, { wch: 20 }, { wch: 55 }, { wch: 45 }
+            ];
+            XLSX.utils.book_append_sheet(wb, ws, 'Registro_Actas_HSEQ');
+            XLSX.writeFile(wb, `Registro_Inspecciones_HSEQ_Prace_${new Date().toISOString().slice(0, 10)}.xlsx`);
+            showToast('Resumen Excel del historial descargado.', 'success');
+        }
+
+        function exportHistoryJson() {
+            const list = getHistoryList();
+            const blob = new Blob([JSON.stringify(list, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Backup_Actas_HSEQ_Prace_${new Date().toISOString().slice(0, 10)}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast('Copia de seguridad JSON descargada.', 'success');
+        }
+
+        function importHistoryJson(file) {
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = e => {
+                try {
+                    const imported = JSON.parse(e.target.result);
+                    if (!Array.isArray(imported)) throw new Error('Formato inválido');
+                    const current = getHistoryList();
+                    const existingIds = new Set(current.map(r => r.id));
+                    let added = 0;
+                    imported.forEach(item => {
+                        if (item && item.id && !existingIds.has(item.id)) {
+                            current.push(item);
+                            added++;
+                        }
+                    });
+                    current.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                    localStorage.setItem(STORAGE_KEYS.HISTORY, JSON.stringify(current));
+                    renderHistoryModal();
+                    updateTopMetrics();
+                    showToast(`Importación completada: ${added} registros nuevos añadidos.`, 'success');
+                } catch {
+                    showToast('El archivo JSON no tiene un formato válido.', 'error');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function toggleModal(id, show) {
+            const el = document.getElementById(id);
+            if (show) {
+                el.classList.remove('hidden');
+                if (id === 'modal-history') renderHistoryModal();
+            } else {
+                el.classList.add('hidden');
+            }
+        }
+
+        function resetCurrentForm() {
+            AppState.responses = initEmptyResponses();
+            AppState.meta.fecha = new Date().toISOString().slice(0, 10);
+            AppState.meta.observaciones = '';
+            document.getElementById('meta-fecha').value = AppState.meta.fecha;
+            document.getElementById('meta-observaciones').value = '';
+            clearSignature('inspector');
+            clearSignature('jefe');
+            persistDraft();
+            renderFormBlocks();
+            showToast('Formulario reiniciado para una nueva inspección.', 'info');
+        }
+
+        /**
+         * Inicialización General
+         */
+        document.addEventListener('DOMContentLoaded', () => {
+            loadInitialState();
+            renderFormBlocks();
+            initSignaturePads();
+
+            // Listeners metadatos con autoguardado
+            ['meta-obra', 'meta-jefe', 'meta-inspector', 'meta-fecha', 'meta-observaciones'].forEach(id => {
+                document.getElementById(id).addEventListener('input', e => {
+                    const key = id.replace('meta-', '');
+                    AppState.meta[key] = e.target.value;
+                    persistDraft();
+                });
+            });
+
+            document.getElementById('btn-mark-all-ok').addEventListener('click', markAllOk);
+            document.getElementById('btn-reset-form').addEventListener('click', resetCurrentForm);
+
+            document.getElementById('btn-generate-pdf').addEventListener('click', () => generateAndSaveInspection(true));
+            document.getElementById('btn-generate-pdf-bottom').addEventListener('click', () => generateAndSaveInspection(true));
+            document.getElementById('btn-save-only').addEventListener('click', () => generateAndSaveInspection(false));
+
+            document.getElementById('btn-open-history').addEventListener('click', () => toggleModal('modal-history', true));
+            document.getElementById('btn-open-cloud').addEventListener('click', () => toggleModal('modal-cloud', true));
+
+            document.getElementById('btn-export-history-excel').addEventListener('click', exportHistoryToExcel);
+            document.getElementById('btn-export-json').addEventListener('click', exportHistoryJson);
+            document.getElementById('input-import-json').addEventListener('change', e => importHistoryJson(e.target.files[0]));
+
+            document.getElementById('btn-save-cloud-url').addEventListener('click', () => {
+                const url = document.getElementById('cloud-webhook-url').value.trim();
+                localStorage.setItem(STORAGE_KEYS.CLOUD_URL, url);
+                showToast(url ? 'URL de sincronización Cloud guardada.' : 'Sincronización Cloud desactivada.', 'success');
+            });
+
+            document.getElementById('btn-copy-gas').addEventListener('click', () => {
+                const codeText = document.getElementById('gas-code-block').textContent;
+                const textarea = document.createElement('textarea');
+                textarea.value = codeText;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                showToast('Código de Google Apps Script copiado al portapapeles.', 'success');
+            });
+        });
+    </script>
+</body>
+</html>
