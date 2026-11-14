@@ -1,0 +1,1076 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Acta de Inspección HSEQ - En Obra (PEV-01/F06) | Prace</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        prace: { blue: '#0f294a', accent: '#0066b2', light: '#eef4fa', gold: '#d97706' }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .pill-btn { transition: all 0.12s ease-in-out; user-select: none; -webkit-tap-highlight-color: transparent; }
+        .pill-btn:active { transform: scale(0.95); }
+        .sig-canvas { touch-action: none; background-image: radial-gradient(#cbd5e1 1px, transparent 1px); background-size: 16px 16px; }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 antialiased pb-24">
+
+    <!-- Barra Superior -->
+    <header class="bg-prace-blue text-white sticky top-0 z-40 shadow-md border-b border-slate-700">
+        <div class="max-w-5xl mx-auto px-3 sm:px-6 py-2.5">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+                <div class="flex items-center space-x-2.5">
+                    <div class="bg-white px-2 py-1 rounded shadow-sm flex items-center justify-center">
+                        <img id="header-brand-logo" alt="Prace" class="h-7 sm:h-8 w-auto object-contain">
+                    </div>
+                    <div>
+                        <div class="flex items-center space-x-2">
+                            <h1 class="text-sm sm:text-base font-bold leading-tight">Acta HSEQ PEV-01/F06</h1>
+                            <span class="hidden sm:inline-block text-[10px] font-mono bg-slate-800 text-slate-300 px-1.5 py-0.5 rounded">ED. 3</span>
+                        </div>
+                        <div class="flex items-center space-x-3 text-[11px] text-slate-300 mt-0.5">
+                            <span id="header-progress" class="font-mono">0/46 ítems</span>
+                            <span>•</span>
+                            <span id="header-nc-badge" class="font-mono font-bold text-emerald-400">0 NC</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-1.5 sm:space-x-2">
+                    <button id="btn-mark-all-ok" type="button" class="pill-btn inline-flex items-center px-2.5 py-2 rounded-lg text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white shadow-sm">
+                        <span class="hidden md:inline">Marcar todo OK (SI)</span><span class="md:hidden">Todo OK</span>
+                    </button>
+                    <button id="btn-open-history" type="button" class="pill-btn relative inline-flex items-center px-2.5 py-2 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-white border border-slate-600">
+                        <span class="hidden sm:inline">Historial</span>
+                        <span id="history-count-badge" class="ml-1.5 bg-amber-500 text-slate-950 font-mono font-bold text-[10px] px-1.5 py-0.5 rounded-full">0</span>
+                    </button>
+                    <button id="btn-generate-pdf" type="button" class="pill-btn inline-flex items-center px-3 py-2 rounded-lg text-xs font-bold bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-sm">
+                        <span>Generar PDF</span>
+                    </button>
+                </div>
+            </div>
+            <div class="w-full bg-slate-800 h-1.5 rounded-full mt-2 overflow-hidden">
+                <div id="progress-bar-fill" class="bg-emerald-400 h-full transition-all duration-300" style="width: 0%"></div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Notificaciones Toast -->
+    <div id="toast-container" class="fixed bottom-20 right-4 z-50 flex flex-col space-y-2 pointer-events-none max-w-sm"></div>
+
+    <!-- Contenido Principal -->
+    <main class="max-w-5xl mx-auto px-3 sm:px-6 pt-4 space-y-4">
+        <!-- Datos Generales -->
+        <section class="bg-white rounded-xl border border-slate-200 shadow-sm p-4 sm:p-5">
+            <div class="flex items-center justify-between mb-3 pb-2 border-b border-slate-100">
+                <h2 class="text-xs sm:text-sm font-bold uppercase tracking-wider text-prace-blue flex items-center">
+                    <span class="w-2 h-2 rounded-full bg-prace-accent mr-2"></span>Datos Generales de la Inspección
+                </h2>
+                <button id="btn-reset-form" type="button" class="text-xs font-medium text-slate-500 hover:text-rose-600 underline">Limpiar formulario</button>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">OBRA</label>
+                    <input id="meta-obra" type="text" placeholder="Nombre de la obra" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-prace-accent focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">JEFE OBRA</label>
+                    <input id="meta-jefe" type="text" placeholder="Nombre Jefe de Obra" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-prace-accent focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">INSPECCIONADO POR</label>
+                    <input id="meta-inspector" type="text" placeholder="Técnico / Inspector HSEQ" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-prace-accent focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">FECHA</label>
+                    <input id="meta-fecha" type="date" class="w-full px-3 py-2 text-sm font-mono border border-slate-300 rounded-lg focus:ring-2 focus:ring-prace-accent focus:outline-none">
+                </div>
+            </div>
+        </section>
+
+        <!-- Bloques de Inspección -->
+        <div id="blocks-container" class="space-y-4"></div>
+
+        <!-- Cierre y Firmas -->
+        <section class="bg-white rounded-xl border border-slate-200 shadow-sm p-4 sm:p-5 space-y-5">
+            <h2 class="text-xs sm:text-sm font-bold uppercase tracking-wider text-prace-blue border-b border-slate-100 pb-2">Observaciones Generales y Firmas</h2>
+            <textarea id="meta-observaciones" rows="3" placeholder="Anotar observaciones generales de la inspección..." class="w-full px-3 py-2.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-prace-accent focus:outline-none"></textarea>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div class="border border-slate-200 rounded-xl p-3 bg-slate-50">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-xs font-bold uppercase text-slate-700">FIRMA INSPECTOR</span>
+                        <button type="button" onclick="clearSignature('inspector')" class="text-xs text-rose-600 hover:text-rose-800 underline">Borrar firma</button>
+                    </div>
+                    <div class="bg-white border-2 border-dashed border-slate-300 rounded-lg h-36 relative overflow-hidden">
+                        <canvas id="sig-inspector" class="sig-canvas w-full h-full cursor-crosshair block"></canvas>
+                    </div>
+                </div>
+                <div class="border border-slate-200 rounded-xl p-3 bg-slate-50">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-xs font-bold uppercase text-slate-700">Vº Bº JEFE DE OBRA / ENCARGADO</span>
+                        <button type="button" onclick="clearSignature('jefe')" class="text-xs text-rose-600 hover:text-rose-800 underline">Borrar firma</button>
+                    </div>
+                    <div class="bg-white border-2 border-dashed border-slate-300 rounded-lg h-36 relative overflow-hidden">
+                        <canvas id="sig-jefe" class="sig-canvas w-full h-full cursor-crosshair block"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex flex-wrap justify-end gap-3 pt-2">
+                <button id="btn-save-only" type="button" class="pill-btn px-4 py-3 rounded-xl text-sm font-semibold bg-slate-800 hover:bg-slate-700 text-white">Guardar en Historial</button>
+                <button id="btn-generate-pdf-bottom" type="button" class="pill-btn px-5 py-3 rounded-xl text-sm font-bold bg-amber-500 hover:bg-amber-400 text-slate-950 shadow">Generar PDF Oficial</button>
+            </div>
+        </section>
+    </main>
+
+    <!-- Modal Vista Previa PDF -->
+    <div id="modal-pdf-preview" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-2 sm:p-5">
+        <div class="bg-white rounded-2xl w-full max-w-5xl h-[92vh] flex flex-col overflow-hidden shadow-2xl">
+            <div class="px-4 py-3 bg-prace-blue text-white flex justify-between items-center">
+                <h3 class="font-bold text-sm sm:text-base">Vista Previa Acta Oficial (PEV-01/F06)</h3>
+                <div class="flex items-center gap-2">
+                    <button id="btn-download-from-preview" type="button" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-500 hover:bg-amber-400 text-slate-950">Descargar PDF</button>
+                    <button type="button" onclick="toggleModal('modal-pdf-preview', false)" class="text-white hover:text-slate-300 text-2xl leading-none px-2">&times;</button>
+                </div>
+            </div>
+            <iframe id="pdf-preview-iframe" class="flex-1 w-full border-0 bg-slate-700"></iframe>
+        </div>
+    </div>
+
+    <!-- Modal Historial -->
+    <div id="modal-history" class="hidden fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6">
+        <div class="bg-white rounded-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden shadow-2xl">
+            <div class="px-5 py-4 bg-prace-blue text-white flex justify-between items-center">
+                <h3 class="font-bold text-base">Historial de Inspecciones Guardadas</h3>
+                <button type="button" onclick="toggleModal('modal-history', false)" class="text-white hover:text-slate-300 text-2xl leading-none px-2">&times;</button>
+            </div>
+            <div class="px-5 py-3 bg-slate-50 border-b flex flex-wrap gap-2">
+                <button id="btn-export-excel" type="button" class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold">Exportar Resumen Excel</button>
+                <button id="btn-export-json" type="button" class="px-3 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 text-xs font-bold">Backup JSON</button>
+            </div>
+            <div id="history-list-container" class="flex-1 overflow-y-auto p-5 space-y-3"></div>
+        </div>
+    </div>
+
+    <!-- Modal Confirmación Reinicio -->
+    <div id="modal-confirm-reset" class="hidden fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl max-w-sm w-full p-5 shadow-xl space-y-4">
+            <h4 class="font-bold text-slate-900">¿Limpiar formulario actual?</h4>
+            <p class="text-xs text-slate-600">Se borrarán las respuestas y firmas actuales que no hayas guardado en el historial.</p>
+            <div class="flex justify-end gap-2">
+                <button type="button" onclick="toggleModal('modal-confirm-reset', false)" class="px-3 py-1.5 rounded-lg text-xs font-semibold border border-slate-300 text-slate-700 hover:bg-slate-50">Cancelar</button>
+                <button type="button" id="btn-confirm-reset-yes" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-rose-600 hover:bg-rose-500 text-white">Sí, limpiar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * LOGOTIPOS OFICIALES EXACTOS EXTRAÍDOS DEL PDF ORIGINAL DE PRACE (PEV-01/F06)
+         */
+        const EXACT_LOGO_P1 = 'data:image/jpeg;base64,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';
+        const EXACT_LOGO_P2 = 'data:image/jpeg;base64,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';
+
+        /**
+         * ESQUEMA LITERAL DE LOS 7 BLOQUES DEL ACTA PEV-01/F06 (46 ÍTEMS)
+         */
+        const HSEQ_SCHEMA = [
+            {
+                id: 'epis', title: 'EPIS Y ROPA DE TRABAJO',
+                columns: [
+                    { key: 'estado', label: 'BUEN ESTADO', options: ['SI', 'NO'] },
+                    { key: 'uso', label: 'UTILIZACIÓN', options: ['SI', 'NO', 'NA'] }
+                ],
+                items: [
+                    'CASCO', 'BOTAS', 'GUANTES', 'TAPONES', 'GAFAS', 'MASCARILLA',
+                    'PANTALLA FACIAL Y MANDIL DE SOLDADOR', 'ARNÉS', 'DOBLE GANCHO', 'FAENA/MONO'
+                ]
+            },
+            {
+                id: 'senalizacion', title: 'SEÑALIZACIÓN EMERGENCIA',
+                columns: [
+                    { key: 'estado', label: 'BUEN ESTADO', options: ['SI', 'NO'] },
+                    { key: 'uso', label: 'UTILIZACIÓN', options: ['SI', 'NO', 'NA'] }
+                ],
+                items: [
+                    'EXTINTORES', 'BOTIQUIN', 'BIES', 'RIESGOS A TERCEROS', 'VALLADO OBRA', 'SALIDAS EMERGENCIA'
+                ]
+            },
+            {
+                id: 'herramientas', title: 'HERRAMIENTAS Y MEDIOS AUXILIARES',
+                columns: [
+                    { key: 'estado', label: 'BUEN ESTADO', options: ['SI', 'NO'] },
+                    { key: 'uso', label: 'UTILIZACIÓN', options: ['SI', 'NO', 'NA'] }
+                ],
+                items: [
+                    'HERRAMIENTAS MANUALES', 'HERRAMIENTAS ELECTRICAS', 'GRÚA', 'ESLINGAS', 'VEHÍCULOS/MAQUINARIA', 'CARRETILLA ELEVADORA'
+                ]
+            },
+            {
+                id: 'orden', title: 'ORDEN Y LIMPIEZA',
+                columns: [
+                    { key: 'estado', label: 'BUEN ESTADO', options: ['SI', 'NO'] },
+                    { key: 'desviacion', label: 'DESVIACIÓN', options: ['SI', 'NO', 'NA'] }
+                ],
+                items: ['ZONA DE TRABAJO', 'ACOPIO GENERAL']
+            },
+            {
+                id: 'condiciones', title: 'CONDICIONES GENERALES OBRA',
+                columns: [
+                    { key: 'aceptable', label: 'ACEPTABLE', options: ['SI', 'NO'] },
+                    { key: 'comunicacion', label: 'COMUNICACIÓN CLIENTE', options: ['SI', 'NO', 'NA'] }
+                ],
+                items: [
+                    'RIESGO CAÍDAS MISMO NIVEL', 'RIESGO CAÍDAS DISTINTO NIVEL', 'ILUMINACIÓN',
+                    'SEÑALIZACIÓN/ CARTEL OBRA', 'ORDEN Y LIMPIEZA', 'ESCALERAS/ESCALERAS PORTATILES',
+                    'ZANJAS', 'PROTECCIONES COLECTIVAS', 'CONDICIONES METEOROLÓGICAS', 'RUTAS EVACUACIÓN'
+                ]
+            },
+            {
+                id: 'medioambiente', title: 'MEDIOAMBIENTE',
+                columns: [
+                    { key: 'estado', label: 'BUEN ESTADO', options: ['SI', 'NO', 'NA'] }
+                ],
+                items: [
+                    'EL NÚMERO DE CONTENEDORES EN LA ZONA ES, DE ACUERDO CON LA FRECUENCIA DE RECOGIDA, EL SUFICIENTE PARA EVITAR RESIDUOS ALMACENADOS FUERA DEL CONTENEDOR Y MEZCLAS PROVOCADAS POR FALTA DE CONTENEDORES.',
+                    'EL ESTADO DE CONSERVACIÓN DE LOS CONTENEDORES ES ADECUADO (SEGURIDAD PARA MANIPULACIÓN, CARENCIA DE FUGAS, CARENCIA DE MALOS OLORES, ETC.)',
+                    'EL ESTADO DE LA IDENTIFICACIÓN DE LOS DIFERENTES CONTENEDORES ES CORRECTO',
+                    'LOS CONTENEDORES SITUADOS EN EL EXTERIOR ESTÁN DOTADOS DE TAPA Y TIENEN LAS TAPAS CERRADAS',
+                    'LOS CONTENEDORES QUE HA SIDO RETIRTADOS PARA SU DESCARGA SON DEVUELTOS Y SITUADOS EN EL LUGAR DE ORIGEN',
+                    'EL ESTADO DEL CONTENIDO DE LOS CONTENEDORES ES EL ADECUADO: NO CONTIENEN MEZCLAS INDESEADAS'
+                ]
+            },
+            {
+                id: 'calidad', title: 'CALIDAD /VARIOS',
+                columns: [
+                    { key: 'existe', label: '¿EXISTE?', options: ['SI', 'NO', 'NA'] },
+                    { key: 'cumple', label: '¿SE CUMPLE?', options: ['SI', 'NO', 'NA'] }
+                ],
+                items: [
+                    'LIBRO SUBCONTRATACIÓN', 'DOCUMENTACIÓN SUBCONTRATAS EN OBRA', 'DOCUMENTACIÓN PERSONAL EN OBRA',
+                    'PLANOS', 'PLAN DE MONTAJE ANDAMIO', 'PROCEDIMIENTOS/INSTRUCCIÓN DE TRABAJO',
+                    'PPI', 'CALIBRACION EQUIPOS MEDICIÓN', 'FICHAS TÉCNICAS DE MATERIALES', 'FICHAS DE DATOS DE SEGURIDAD'
+                ]
+            }
+        ];
+
+        const STORAGE_KEYS = { DRAFT: 'prace_hseq_draft_v4', HISTORY: 'prace_hseq_history_v4' };
+        let AppState = {
+            meta: { obra: '', jefe: '', inspector: '', fecha: new Date().toISOString().slice(0, 10), observaciones: '' },
+            responses: {},
+            signatures: { inspector: null, jefe: null }
+        };
+        let LastGeneratedPdf = { doc: null, fileName: '', blobUrl: null };
+        const SignaturePads = {};
+
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            const colors = { info: 'bg-slate-900', success: 'bg-emerald-600', error: 'bg-rose-600' };
+            toast.className = `px-4 py-3 rounded-lg text-white text-xs font-medium shadow-lg transition-all duration-300 ${colors[type] || colors.info}`;
+            toast.textContent = message;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        function loadInitialState() {
+            const saved = localStorage.getItem(STORAGE_KEYS.DRAFT);
+            if (saved) {
+                try {
+                    const parsed = JSON.parse(saved);
+                    if (parsed && parsed.meta) AppState = parsed;
+                } catch (e) {}
+            }
+            if (!AppState.meta.fecha) AppState.meta.fecha = new Date().toISOString().slice(0, 10);
+            ['obra', 'jefe', 'inspector', 'fecha', 'observaciones'].forEach(f => {
+                const el = document.getElementById(`meta-${f}`);
+                if (el) el.value = AppState.meta[f] || '';
+            });
+            updateProgress();
+        }
+
+        function persistDraft() {
+            try {
+                localStorage.setItem(STORAGE_KEYS.DRAFT, JSON.stringify(AppState));
+            } catch (e) {}
+            updateProgress();
+        }
+
+        function updateProgress() {
+            let total = 0, answered = 0, ncs = 0;
+            HSEQ_SCHEMA.forEach(b => {
+                b.items.forEach((_, idx) => {
+                    total++;
+                    const id = `${b.id}_${idx}`;
+                    const resp = AppState.responses[id];
+                    if (resp && resp.nc === 'SI') ncs++;
+                    if (resp && Object.keys(resp).some(k => k !== 'nc' && k !== 'obs' && resp[k])) answered++;
+                });
+            });
+            document.getElementById('header-progress').textContent = `${answered}/${total} ítems`;
+            document.getElementById('header-nc-badge').textContent = `${ncs} NC`;
+            document.getElementById('header-nc-badge').className = `font-mono font-bold ${ncs > 0 ? 'text-rose-400' : 'text-emerald-400'}`;
+            document.getElementById('progress-bar-fill').style.width = `${(answered / total) * 100}%`;
+        }
+
+        function renderFormBlocks() {
+            const container = document.getElementById('blocks-container');
+            container.innerHTML = '';
+            HSEQ_SCHEMA.forEach((block, bIdx) => {
+                const bDiv = document.createElement('section');
+                bDiv.className = 'bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden';
+                let html = `
+                    <div class="bg-slate-200/80 px-4 py-2.5 border-b border-slate-300 flex items-center justify-between">
+                        <h2 class="text-xs sm:text-sm font-bold text-slate-900 uppercase tracking-wide">${bIdx + 1}. ${block.title}</h2>
+                        <button type="button" onclick="markBlockOk('${block.id}')" class="text-[11px] font-semibold px-2.5 py-1 rounded bg-white hover:bg-emerald-50 text-emerald-700 border border-slate-300 shadow-sm">
+                            Todo bloque OK
+                        </button>
+                    </div>
+                    <div class="divide-y divide-slate-100 px-4">
+                `;
+                
+                block.items.forEach((item, idx) => {
+                    const id = `${block.id}_${idx}`;
+                    const resp = AppState.responses[id] || {};
+                    const isNc = resp.nc === 'SI';
+                    const hasObs = Boolean(resp.obs && resp.obs.trim().length > 0);
+
+                    html += `<div class="py-3 ${isNc ? 'bg-rose-50/40 -mx-4 px-4' : ''}">
+                        <div class="text-xs font-semibold text-slate-800 mb-2 leading-snug">${item}</div>
+                        <div class="flex flex-wrap gap-2 items-center justify-between">
+                            <div class="flex flex-wrap gap-2 items-center">`;
+                    
+                    block.columns.forEach(col => {
+                        html += `<div class="inline-flex items-center bg-slate-100 rounded-lg p-1 border border-slate-200">
+                            <span class="text-[10px] font-bold text-slate-500 px-1.5 uppercase">${col.label}:</span>`;
+                        col.options.forEach(opt => {
+                            const isSelected = resp[col.key] === opt;
+                            let activeClass = 'bg-transparent text-slate-600 hover:bg-slate-200/70';
+                            if (isSelected) {
+                                if (opt === 'SI') activeClass = col.key === 'desviacion' ? 'bg-rose-600 text-white shadow-sm' : 'bg-emerald-600 text-white shadow-sm';
+                                else if (opt === 'NO') activeClass = col.key === 'desviacion' ? 'bg-emerald-600 text-white shadow-sm' : 'bg-rose-600 text-white shadow-sm';
+                                else activeClass = 'bg-slate-600 text-white shadow-sm';
+                            }
+                            html += `<button type="button" onclick="setResponse('${id}', '${col.key}', '${opt}')" class="pill-btn px-2.5 py-1 text-[11px] font-bold rounded-md ${activeClass}">${opt}</button>`;
+                        });
+                        html += `</div>`;
+                    });
+
+                    html += `</div>
+                            <div class="flex items-center gap-1.5">
+                                <button type="button" onclick="toggleObsInput('${id}')" class="pill-btn px-2 py-1 text-[11px] font-medium rounded-md border ${hasObs ? 'bg-amber-50 border-amber-300 text-amber-800' : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50'}">
+                                    ${hasObs ? 'Editar Obs.' : '+ Obs.'}
+                                </button>
+                                <button type="button" onclick="setResponse('${id}', 'nc', 'SI')" class="pill-btn px-2.5 py-1 text-[11px] font-bold rounded-md border ${isNc ? 'bg-rose-600 border-rose-700 text-white shadow-sm' : 'bg-slate-100 border-slate-200 text-slate-600 hover:bg-slate-200'}">
+                                    NC: ${isNc ? 'SÍ' : 'NO'}
+                                </button>
+                            </div>
+                        </div>
+                        <div id="obs-wrap-${id}" class="${(isNc || hasObs) ? 'mt-2' : 'hidden mt-2'}">
+                            <input type="text" placeholder="Observaciones del punto..." value="${(resp.obs || '').replace(/"/g, '&quot;')}" oninput="setObsText('${id}', this.value)" class="w-full px-2.5 py-1.5 text-xs border border-slate-300 rounded-lg bg-white focus:ring-2 focus:ring-prace-accent focus:outline-none">
+                        </div>
+                    </div>`;
+                });
+                bDiv.innerHTML = html + `</div>`;
+                container.appendChild(bDiv);
+            });
+        }
+
+        window.toggleObsInput = function(id) {
+            const wrap = document.getElementById(`obs-wrap-${id}`);
+            if (wrap) {
+                wrap.classList.toggle('hidden');
+                if (!wrap.classList.contains('hidden')) {
+                    const inp = wrap.querySelector('input');
+                    if (inp) inp.focus();
+                }
+            }
+        };
+
+        window.setObsText = function(id, text) {
+            if (!AppState.responses[id]) AppState.responses[id] = {};
+            AppState.responses[id].obs = text;
+            persistDraft();
+        };
+
+        window.setResponse = function(id, key, val) {
+            if (!AppState.responses[id]) AppState.responses[id] = {};
+            AppState.responses[id][key] = AppState.responses[id][key] === val ? null : val;
+            
+            if (key !== 'nc' && key !== 'obs') {
+                const currentVal = AppState.responses[id][key];
+                const isBad = (currentVal === 'NO' && key !== 'desviacion') || (currentVal === 'SI' && key === 'desviacion');
+                if (isBad) {
+                    AppState.responses[id].nc = 'SI';
+                } else if (AppState.responses[id].nc === 'SI' && ((currentVal === 'SI' && key !== 'desviacion') || (currentVal === 'NO' && key === 'desviacion') || currentVal === 'NA')) {
+                    AppState.responses[id].nc = null;
+                }
+            }
+            
+            persistDraft();
+            renderFormBlocks();
+        };
+
+        window.markBlockOk = function(blockId) {
+            const block = HSEQ_SCHEMA.find(b => b.id === blockId);
+            if (!block) return;
+            block.items.forEach((_, idx) => {
+                const id = `${block.id}_${idx}`;
+                if (!AppState.responses[id]) AppState.responses[id] = {};
+                block.columns.forEach(col => {
+                    AppState.responses[id][col.key] = col.key === 'desviacion' ? 'NO' : 'SI';
+                });
+                AppState.responses[id].nc = null;
+            });
+            persistDraft();
+            renderFormBlocks();
+            showToast(`Bloque "${block.title}" marcado como OK`, 'success');
+        };
+
+        function markAllOk() {
+            HSEQ_SCHEMA.forEach(b => {
+                b.items.forEach((_, idx) => {
+                    const id = `${b.id}_${idx}`;
+                    if (!AppState.responses[id]) AppState.responses[id] = {};
+                    b.columns.forEach(col => {
+                        AppState.responses[id][col.key] = col.key === 'desviacion' ? 'NO' : 'SI';
+                    });
+                    AppState.responses[id].nc = null;
+                });
+            });
+            persistDraft();
+            renderFormBlocks();
+            showToast('Todos los 46 ítems marcados como OK', 'success');
+        }
+
+        function initSignaturePads() {
+            ['inspector', 'jefe'].forEach(role => {
+                const canvas = document.getElementById(`sig-${role}`);
+                if (!canvas) return;
+                const ctx = canvas.getContext('2d');
+                SignaturePads[role] = { canvas, ctx, drawing: false };
+                
+                const resize = () => {
+                    const rect = canvas.parentElement.getBoundingClientRect();
+                    if (rect.width === 0 || rect.height === 0) return;
+                    canvas.width = rect.width;
+                    canvas.height = rect.height;
+                    ctx.lineWidth = 2.2;
+                    ctx.lineCap = 'round';
+                    ctx.lineJoin = 'round';
+                    ctx.strokeStyle = '#0f294a';
+                    if (AppState.signatures[role]) {
+                        const img = new Image();
+                        img.onload = () => ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                        img.src = AppState.signatures[role];
+                    }
+                };
+                window.addEventListener('resize', resize);
+                setTimeout(resize, 50);
+
+                const getPos = (e) => {
+                    const rect = canvas.getBoundingClientRect();
+                    const evt = e.touches ? e.touches[0] : e;
+                    return { x: evt.clientX - rect.left, y: evt.clientY - rect.top };
+                };
+
+                const start = (e) => {
+                    e.preventDefault();
+                    SignaturePads[role].drawing = true;
+                    const p = getPos(e);
+                    ctx.beginPath();
+                    ctx.moveTo(p.x, p.y);
+                };
+                const move = (e) => {
+                    if (!SignaturePads[role].drawing) return;
+                    e.preventDefault();
+                    const p = getPos(e);
+                    ctx.lineTo(p.x, p.y);
+                    ctx.stroke();
+                };
+                const stop = () => {
+                    if (SignaturePads[role].drawing) {
+                        SignaturePads[role].drawing = false;
+                        AppState.signatures[role] = canvas.toDataURL('image/png');
+                        persistDraft();
+                    }
+                };
+
+                canvas.addEventListener('mousedown', start);
+                canvas.addEventListener('mousemove', move);
+                canvas.addEventListener('mouseup', stop);
+                canvas.addEventListener('mouseout', stop);
+                canvas.addEventListener('touchstart', start, { passive: false });
+                canvas.addEventListener('touchmove', move, { passive: false });
+                canvas.addEventListener('touchend', stop);
+            });
+        }
+
+        window.clearSignature = function(role) {
+            const p = SignaturePads[role];
+            if (p && p.ctx) p.ctx.clearRect(0, 0, p.canvas.width, p.canvas.height);
+            AppState.signatures[role] = null;
+            persistDraft();
+        };
+
+        function executeResetForm() {
+            AppState.responses = {};
+            AppState.signatures = { inspector: null, jefe: null };
+            ['inspector', 'jefe'].forEach(clearSignature);
+            ['obra', 'jefe', 'inspector', 'observaciones'].forEach(f => {
+                AppState.meta[f] = '';
+                const el = document.getElementById(`meta-${f}`);
+                if (el) el.value = '';
+            });
+            persistDraft();
+            renderFormBlocks();
+            toggleModal('modal-confirm-reset', false);
+            showToast('Formulario limpiado correctamente', 'info');
+        }
+
+        window.toggleModal = function(id, show) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            if (show) {
+                el.classList.remove('hidden');
+                if (id === 'modal-history') renderHistoryModal();
+            } else {
+                el.classList.add('hidden');
+            }
+        };
+
+        /**
+         * GENERACIÓN DE PDF OFICIAL EXACTA (PEV-01/F06) EN 2 PÁGINAS A4 CON LOGOS REALES DE PRACE
+         */
+        async function handleGenerateAndSavePdf(openPreview = true) {
+            showToast('Generando PDF Oficial PEV-01/F06...', 'info');
+            try {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
+                
+                const pageWidth = 210;
+                const pageHeight = 297;
+                const m = 10; // Margen 10mm (ancho útil = 190mm)
+                const contentW = pageWidth - 2 * m;
+
+                const formatDateES = (iso) => {
+                    if (!iso) return '';
+                    const parts = iso.split('-');
+                    return parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : iso;
+                };
+
+                // ==========================================
+                // PÁGINA 1 (ED. 3)
+                // ==========================================
+                const headerH1 = 26;
+                const logoBoxW = 48;
+                const codeBoxW = 28;
+
+                // Caja exterior membrete Página 1
+                doc.setDrawColor(0);
+                doc.setLineWidth(0.45);
+                doc.rect(m, m, contentW, headerH1);
+                doc.setLineWidth(0.25);
+                doc.line(m + logoBoxW, m, m + logoBoxW, m + headerH1);
+                doc.line(m + contentW - codeBoxW, m, m + contentW - codeBoxW, m + headerH1);
+                doc.line(m + contentW - codeBoxW, m + headerH1 / 2, m + contentW, m + headerH1 / 2);
+
+                // Imagen exacta Page 1 (218x120 -> ratio 1.8166)
+                const imgW1 = 44;
+                const imgH1 = imgW1 / (218 / 120); // ~24.2mm
+                doc.addImage(EXACT_LOGO_P1, 'JPEG', m + 2, m + (headerH1 - imgH1) / 2, imgW1, imgH1);
+
+                // Título central
+                doc.setFont("helvetica", "bold");
+                doc.setFontSize(13);
+                doc.setTextColor(0, 0, 0);
+                doc.text("ACTA DE INSPECCIÓN HSEQ - EN OBRA", m + logoBoxW + (contentW - logoBoxW - codeBoxW) / 2, m + 14.5, { align: "center" });
+
+                // Código derecho PEV-01/F06 | ED. 3
+                doc.setFont("helvetica", "normal");
+                doc.setFontSize(8.5);
+                doc.text("PEV-01/F06", m + contentW - codeBoxW / 2, m + 8, { align: "center" });
+                doc.text("ED. 3", m + contentW - codeBoxW / 2, m + 21, { align: "center" });
+
+                // Cuadro de metadatos (OBRA / JEFE OBRA / FECHA)
+                let curY = m + headerH1 + 2;
+                const metaRowH = 5.2;
+                const metaRows = [
+                    { label: 'OBRA:', val: (AppState.meta.obra || '').toUpperCase() },
+                    { label: 'JEFE OBRA:', val: (AppState.meta.jefe || '').toUpperCase() },
+                    { label: 'FECHA:', val: formatDateES(AppState.meta.fecha) }
+                ];
+                metaRows.forEach((mr) => {
+                    doc.setLineWidth(0.25);
+                    doc.rect(m, curY, contentW, metaRowH);
+                    doc.line(m + 26, curY, m + 26, curY + metaRowH);
+                    doc.setFont("helvetica", "bold");
+                    doc.setFontSize(7);
+                    doc.text(mr.label, m + 1.5, curY + 3.6);
+                    doc.setFont("helvetica", "normal");
+                    doc.text(mr.val, m + 27.5, curY + 3.6);
+                    curY += metaRowH;
+                });
+
+                curY += 2;
+
+                // Bloques 1 a 5 (Ancho total = 190mm)
+                // Col0: Item (64), Col1..2: Sub1 SI/NO (8+8), Col3..5: Sub2 SI/NO/NA (8+8+8), Col6: Obs (74), Col7..8: NC SI/NO (6+6) -> Total = 190mm
+                for (let i = 0; i < 5; i++) {
+                    const b = HSEQ_SCHEMA[i];
+                    const c1Key = b.columns[0].key;
+                    const c2Key = b.columns[1].key;
+
+                    const body = b.items.map((itemText, idx) => {
+                        const r = AppState.responses[`${b.id}_${idx}`] || {};
+                        return [
+                            itemText,
+                            r[c1Key] === 'SI' ? 'X' : '',
+                            r[c1Key] === 'NO' ? 'X' : '',
+                            r[c2Key] === 'SI' ? 'X' : '',
+                            r[c2Key] === 'NO' ? 'X' : '',
+                            r[c2Key] === 'NA' ? 'X' : '',
+                            r.obs || '',
+                            r.nc === 'SI' ? 'X' : '',
+                            r.nc === 'NO' ? 'X' : ''
+                        ];
+                    });
+
+                    doc.autoTable({
+                        startY: curY,
+                        head: [
+                            [
+                                { content: b.title, rowSpan: 2, styles: { halign: 'left', valign: 'middle', fontSize: 8.5, fontStyle: 'bold' } },
+                                { content: b.columns[0].label, colSpan: 2, styles: { halign: 'center', fontSize: 6.5 } },
+                                { content: b.columns[1].label, colSpan: 3, styles: { halign: 'center', fontSize: 6.5 } },
+                                { content: 'OBSERVACIONES', rowSpan: 2, styles: { halign: 'center', valign: 'middle', fontSize: 7 } },
+                                { content: 'NC', colSpan: 2, styles: { halign: 'center', fontSize: 6.5 } }
+                            ],
+                            ['SI', 'NO', 'SI', 'NO', 'NA', 'SI', 'NO']
+                        ],
+                        body: body,
+                        theme: 'grid',
+                        styles: {
+                            font: 'helvetica',
+                            fontSize: 6.5,
+                            cellPadding: { top: 0.7, right: 1, bottom: 0.7, left: 1 },
+                            lineColor: [0, 0, 0],
+                            lineWidth: 0.2,
+                            textColor: [0, 0, 0],
+                            valign: 'middle'
+                        },
+                        headStyles: {
+                            fillColor: [192, 192, 192],
+                            textColor: [0, 0, 0],
+                            fontStyle: 'bold',
+                            halign: 'center',
+                            cellPadding: { top: 0.7, right: 0.5, bottom: 0.7, left: 0.5 }
+                        },
+                        columnStyles: {
+                            0: { cellWidth: 64, halign: 'left' },
+                            1: { cellWidth: 8, halign: 'center', fontStyle: 'bold' },
+                            2: { cellWidth: 8, halign: 'center', fontStyle: 'bold' },
+                            3: { cellWidth: 8, halign: 'center', fontStyle: 'bold' },
+                            4: { cellWidth: 8, halign: 'center', fontStyle: 'bold' },
+                            5: { cellWidth: 8, halign: 'center', fontStyle: 'bold' },
+                            6: { cellWidth: 74, halign: 'left' },
+                            7: { cellWidth: 6, halign: 'center', fontStyle: 'bold' },
+                            8: { cellWidth: 6, halign: 'center', fontStyle: 'bold' }
+                        },
+                        margin: { left: m, right: m }
+                    });
+                    curY = doc.lastAutoTable.finalY + 2;
+                }
+
+                // Bloque 6: MEDIOAMBIENTE (Ancho total = 190mm)
+                // Col0: Item (80), Col1..3: BUEN ESTADO SI/NO/NA (8+8+8), Col4: Obs (74), Col5..6: NC SI/NO (6+6) -> Total = 190mm
+                const bEnv = HSEQ_SCHEMA[5];
+                const envBody = bEnv.items.map((itemText, idx) => {
+                    const r = AppState.responses[`${bEnv.id}_${idx}`] || {};
+                    return [
+                        itemText,
+                        r.estado === 'SI' ? 'X' : '',
+                        r.estado === 'NO' ? 'X' : '',
+                        r.estado === 'NA' ? 'X' : '',
+                        r.obs || '',
+                        r.nc === 'SI' ? 'X' : '',
+                        r.nc === 'NO' ? 'X' : ''
+                    ];
+                });
+
+                doc.autoTable({
+                    startY: curY,
+                    head: [
+                        [
+                            { content: bEnv.title, rowSpan: 2, styles: { halign: 'left', valign: 'middle', fontSize: 8.5, fontStyle: 'bold' } },
+                            { content: 'BUEN ESTADO', colSpan: 3, styles: { halign: 'center', fontSize: 6.5 } },
+                            { content: 'OBSERVACIONES', rowSpan: 2, styles: { halign: 'center', valign: 'middle', fontSize: 7 } },
+                            { content: 'NC', colSpan: 2, styles: { halign: 'center', fontSize: 6.5 } }
+                        ],
+                        ['SI', 'NO', 'NA', 'SI', 'NO']
+                    ],
+                    body: envBody,
+                    theme: 'grid',
+                    styles: {
+                        font: 'helvetica',
+                        fontSize: 6.0,
+                        cellPadding: { top: 0.7, right: 1, bottom: 0.7, left: 1 },
+                        lineColor: [0, 0, 0],
+                        lineWidth: 0.2,
+                        textColor: [0, 0, 0],
+                        valign: 'middle'
+                    },
+                    headStyles: {
+                        fillColor: [192, 192, 192],
+                        textColor: [0, 0, 0],
+                        fontStyle: 'bold',
+                        halign: 'center',
+                        cellPadding: { top: 0.7, right: 0.5, bottom: 0.7, left: 0.5 }
+                    },
+                    columnStyles: {
+                        0: { cellWidth: 80, halign: 'left' },
+                        1: { cellWidth: 8, halign: 'center', fontStyle: 'bold' },
+                        2: { cellWidth: 8, halign: 'center', fontStyle: 'bold' },
+                        3: { cellWidth: 8, halign: 'center', fontStyle: 'bold' },
+                        4: { cellWidth: 74, halign: 'left' },
+                        5: { cellWidth: 6, halign: 'center', fontStyle: 'bold' },
+                        6: { cellWidth: 6, halign: 'center', fontStyle: 'bold' }
+                    },
+                    margin: { left: m, right: m }
+                });
+
+                // ==========================================
+                // PÁGINA 2 (ED. 1)
+                // ==========================================
+                doc.addPage();
+                const headerH2 = 22;
+
+                doc.setDrawColor(0);
+                doc.setLineWidth(0.45);
+                doc.rect(m, m, contentW, headerH2);
+                doc.setLineWidth(0.25);
+                doc.line(m + logoBoxW, m, m + logoBoxW, m + headerH2);
+                doc.line(m + contentW - codeBoxW, m, m + contentW - codeBoxW, m + headerH2);
+                doc.line(m + contentW - codeBoxW, m + headerH2 / 2, m + contentW, m + headerH2 / 2);
+
+                // Imagen exacta Page 2 (217x97 -> ratio 2.237)
+                const imgW2 = 43;
+                const imgH2 = imgW2 / (217 / 97); // ~19.2mm
+                doc.addImage(EXACT_LOGO_P2, 'JPEG', m + 2.5, m + (headerH2 - imgH2) / 2, imgW2, imgH2);
+
+                doc.setFont("helvetica", "bold");
+                doc.setFontSize(13);
+                doc.text("ACTA DE INSPECCIÓN HSEQ - EN OBRA", m + logoBoxW + (contentW - logoBoxW - codeBoxW) / 2, m + 12.5, { align: "center" });
+
+                doc.setFont("helvetica", "normal");
+                doc.setFontSize(8.5);
+                doc.text("PEV-01/F06", m + contentW - codeBoxW / 2, m + 7, { align: "center" });
+                doc.text("ED. 1", m + contentW - codeBoxW / 2, m + 18, { align: "center" });
+
+                curY = m + headerH2 + 4;
+
+                // Bloque 7: CALIDAD /VARIOS (Ancho total = 190mm)
+                // Col0: Item (64), Col1..3: ¿EXISTE? (8+8+8), Col4..6: ¿SE CUMPLE? (8+8+8), Col7: Obs (66), Col8..9: NC (6+6) -> Total = 190mm
+                const bQual = HSEQ_SCHEMA[6];
+                const qualBody = bQual.items.map((itemText, idx) => {
+                    const r = AppState.responses[`${bQual.id}_${idx}`] || {};
+                    return [
+                        itemText,
+                        r.existe === 'SI' ? 'X' : '',
+                        r.existe === 'NO' ? 'X' : '',
+                        r.existe === 'NA' ? 'X' : '',
+                        r.cumple === 'SI' ? 'X' : '',
+                        r.cumple === 'NO' ? 'X' : '',
+                        r.cumple === 'NA' ? 'X' : '',
+                        r.obs || '',
+                        r.nc === 'SI' ? 'X' : '',
+                        r.nc === 'NO' ? 'X' : ''
+                    ];
+                });
+
+                doc.autoTable({
+                    startY: curY,
+                    head: [
+                        [
+                            { content: bQual.title, rowSpan: 2, styles: { halign: 'left', valign: 'middle', fontSize: 8.5, fontStyle: 'bold' } },
+                            { content: '¿EXISTE?', colSpan: 3, styles: { halign: 'center', fontSize: 7 } },
+                            { content: '¿SE CUMPLE?', colSpan: 3, styles: { halign: 'center', fontSize: 7 } },
+                            { content: 'OBSERVACIONES', rowSpan: 2, styles: { halign: 'center', valign: 'middle', fontSize: 7 } },
+                            { content: 'NC', colSpan: 2, styles: { halign: 'center', fontSize: 7 } }
+                        ],
+                        ['SI', 'NO', 'NA', 'SI', 'NO', 'NA', 'SI', 'NO']
+                    ],
+                    body: qualBody,
+                    theme: 'grid',
+                    styles: {
+                        font: 'helvetica',
+                        fontSize: 7,
+                        cellPadding: { top: 1.1, right: 1, bottom: 1.1, left: 1 },
+                        lineColor: [0, 0, 0],
+                        lineWidth: 0.2,
+                        textColor: [0, 0, 0],
+                        valign: 'middle'
+                    },
+                    headStyles: {
+                        fillColor: [192, 192, 192],
+                        textColor: [0, 0, 0],
+                        fontStyle: 'bold',
+                        halign: 'center',
+                        cellPadding: { top: 1, right: 0.5, bottom: 1, left: 0.5 }
+                    },
+                    columnStyles: {
+                        0: { cellWidth: 64, halign: 'left' },
+                        1: { cellWidth: 8, halign: 'center', fontStyle: 'bold' },
+                        2: { cellWidth: 8, halign: 'center', fontStyle: 'bold' },
+                        3: { cellWidth: 8, halign: 'center', fontStyle: 'bold' },
+                        4: { cellWidth: 8, halign: 'center', fontStyle: 'bold' },
+                        5: { cellWidth: 8, halign: 'center', fontStyle: 'bold' },
+                        6: { cellWidth: 8, halign: 'center', fontStyle: 'bold' },
+                        7: { cellWidth: 66, halign: 'left' },
+                        8: { cellWidth: 6, halign: 'center', fontStyle: 'bold' },
+                        9: { cellWidth: 6, halign: 'center', fontStyle: 'bold' }
+                    },
+                    margin: { left: m, right: m }
+                });
+
+                curY = doc.lastAutoTable.finalY + 5;
+
+                // Cuadro amplio de OBSERVACIONES:
+                const obsBoxH = 95;
+                doc.setLineWidth(0.35);
+                doc.rect(m, curY, contentW, obsBoxH);
+                doc.setFont("helvetica", "bold");
+                doc.setFontSize(9);
+                doc.text("OBSERVACIONES:", m + 2, curY + 5.5);
+
+                doc.setFont("helvetica", "normal");
+                doc.setFontSize(8.5);
+                if (AppState.meta.observaciones) {
+                    const splitObs = doc.splitTextToSize(AppState.meta.observaciones, contentW - 5);
+                    doc.text(splitObs, m + 2.5, curY + 11);
+                }
+
+                curY += obsBoxH;
+
+                // Bloque de Firmas dividido
+                const sigBoxH = 38;
+                const leftSigW = 86;
+                doc.setLineWidth(0.35);
+                doc.rect(m, curY, contentW, sigBoxH);
+                doc.line(m + leftSigW, curY, m + leftSigW, curY + sigBoxH);
+
+                doc.setFont("helvetica", "bold");
+                doc.setFontSize(8.5);
+                doc.text("INSPECCIONADO POR:", m + 2, curY + 5.5);
+                doc.setFont("helvetica", "normal");
+                doc.text((AppState.meta.inspector || '').toUpperCase(), m + 39, curY + 5.5);
+
+                doc.setFont("helvetica", "bold");
+                doc.text("FECHA:", m + 2, curY + 14.5);
+                doc.setFont("helvetica", "normal");
+                doc.text(formatDateES(AppState.meta.fecha), m + 16, curY + 14.5);
+
+                doc.setFont("helvetica", "bold");
+                doc.text("FIRMA:", m + 2, curY + 23.5);
+
+                doc.text("Vº Bº JEFE DE OBRA/JEFE EQUIPO/ENCARGADO", m + leftSigW + 3, curY + 5.5);
+
+                if (AppState.signatures.inspector) {
+                    doc.addImage(AppState.signatures.inspector, 'PNG', m + 18, curY + 17, 48, 19);
+                }
+                if (AppState.signatures.jefe) {
+                    doc.addImage(AppState.signatures.jefe, 'PNG', m + leftSigW + 16, curY + 9, 64, 26);
+                }
+
+                // Pie de página NA: NO APLICA
+                doc.setFont("helvetica", "normal");
+                doc.setFontSize(7.5);
+                doc.text("NA: NO APLICA", m, curY + sigBoxH + 4.5);
+
+                const safeObra = (AppState.meta.obra || 'Obra').replace(/[^a-z0-9]/gi, '_');
+                const fileName = `PEV01_F06_${safeObra}_${AppState.meta.fecha || 'Acta'}.pdf`;
+                const pdfBlob = doc.output('blob');
+
+                if (LastGeneratedPdf.blobUrl) URL.revokeObjectURL(LastGeneratedPdf.blobUrl);
+                LastGeneratedPdf = { doc, fileName, blobUrl: URL.createObjectURL(pdfBlob) };
+                saveToLocalHistoryOnly(false);
+
+                if (openPreview) {
+                    document.getElementById('pdf-preview-iframe').src = LastGeneratedPdf.blobUrl;
+                    toggleModal('modal-pdf-preview', true);
+                }
+                showToast('PDF generado correctamente con los logotipos originales', 'success');
+            } catch (err) {
+                console.error(err);
+                showToast('Error al generar el PDF: ' + err.message, 'error');
+            }
+        }
+
+        // ================= HISTORIAL Y EXPORTACIÓN =================
+        function getHistoryRecords() {
+            try {
+                const data = localStorage.getItem(STORAGE_KEYS.HISTORY);
+                return data ? JSON.parse(data) : [];
+            } catch (e) {
+                return [];
+            }
+        }
+
+        function saveHistoryRecords(records) {
+            try {
+                localStorage.setItem(STORAGE_KEYS.HISTORY, JSON.stringify(records));
+            } catch (e) {}
+        }
+
+        function saveToLocalHistoryOnly(notify = true) {
+            const records = getHistoryRecords();
+            let ncCount = 0;
+            Object.values(AppState.responses).forEach(r => { if (r && r.nc === 'SI') ncCount++; });
+            
+            const record = {
+                id: Date.now().toString(),
+                date: new Date().toISOString(),
+                meta: { ...AppState.meta },
+                ncCount,
+                responses: JSON.parse(JSON.stringify(AppState.responses))
+            };
+            records.unshift(record);
+            saveHistoryRecords(records);
+            document.getElementById('history-count-badge').textContent = records.length;
+            if (notify) showToast('Acta guardada en el historial local', 'success');
+        }
+
+        function renderHistoryModal() {
+            const records = getHistoryRecords();
+            document.getElementById('history-count-badge').textContent = records.length;
+            const container = document.getElementById('history-list-container');
+            
+            if (records.length === 0) {
+                container.innerHTML = '<p class="text-center text-slate-500 text-sm py-10">No hay actas registradas todavía.</p>';
+                return;
+            }
+
+            container.innerHTML = records.map(r => `
+                <div class="bg-white border border-slate-200 rounded-lg p-3 flex flex-wrap justify-between items-center gap-2 shadow-sm">
+                    <div>
+                        <div class="font-bold text-sm text-prace-blue">${r.meta.obra || 'Obra sin especificar'}</div>
+                        <div class="text-xs text-slate-500 mt-0.5">
+                            Inspector: ${r.meta.inspector || '-'} | Fecha: ${r.meta.fecha || '-'} | 
+                            NCs: <span class="${r.ncCount > 0 ? 'text-rose-600 font-bold' : 'text-emerald-600 font-semibold'}">${r.ncCount}</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button type="button" onclick="loadHistoryIntoForm('${r.id}')" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-semibold rounded-lg border border-slate-300">Cargar en formulario</button>
+                        <button type="button" onclick="deleteHistoryRecord('${r.id}')" class="px-2.5 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-semibold rounded-lg border border-rose-200">Eliminar</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        window.deleteHistoryRecord = function(id) {
+            const filtered = getHistoryRecords().filter(r => r.id !== id);
+            saveHistoryRecords(filtered);
+            renderHistoryModal();
+            showToast('Registro eliminado', 'info');
+        };
+
+        window.loadHistoryIntoForm = function(id) {
+            const records = getHistoryRecords();
+            const record = records.find(r => r.id === id);
+            if (record) {
+                AppState.meta = { ...record.meta };
+                AppState.responses = JSON.parse(JSON.stringify(record.responses || {}));
+                AppState.signatures = { inspector: null, jefe: null };
+                persistDraft();
+                loadInitialState();
+                renderFormBlocks();
+                ['inspector', 'jefe'].forEach(clearSignature);
+                toggleModal('modal-history', false);
+                showToast('Acta cargada en el formulario', 'info');
+            }
+        };
+
+        function exportHistoryToExcel() {
+            const records = getHistoryRecords();
+            if (records.length === 0) return showToast('No hay datos para exportar', 'error');
+            const data = records.map(r => ({
+                'Fecha Registro': new Date(r.date).toLocaleString('es-ES'),
+                'Obra': r.meta.obra || '',
+                'Jefe Obra': r.meta.jefe || '',
+                'Inspector': r.meta.inspector || '',
+                'Fecha Inspección': r.meta.fecha || '',
+                'Total NCs': r.ncCount,
+                'Observaciones': r.meta.observaciones || ''
+            }));
+            const ws = XLSX.utils.json_to_sheet(data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Historial_HSEQ");
+            XLSX.writeFile(wb, `Registro_Inspecciones_HSEQ_${new Date().toISOString().slice(0, 10)}.xlsx`);
+            showToast('Excel exportado correctamente', 'success');
+        }
+
+        // ================= INICIALIZACIÓN =================
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('header-brand-logo').src = EXACT_LOGO_P2;
+            loadInitialState();
+            renderFormBlocks();
+            initSignaturePads();
+
+            ['obra', 'jefe', 'inspector', 'fecha', 'observaciones'].forEach(field => {
+                const el = document.getElementById(`meta-${field}`);
+                if (el) {
+                    el.addEventListener('input', (e) => {
+                        AppState.meta[field] = e.target.value;
+                        persistDraft();
+                    });
+                }
+            });
+
+            document.getElementById('btn-mark-all-ok').addEventListener('click', markAllOk);
+            document.getElementById('btn-reset-form').addEventListener('click', () => toggleModal('modal-confirm-reset', true));
+            document.getElementById('btn-confirm-reset-yes').addEventListener('click', executeResetForm);
+            document.getElementById('btn-open-history').addEventListener('click', () => toggleModal('modal-history', true));
+            document.getElementById('btn-generate-pdf').addEventListener('click', () => handleGenerateAndSavePdf(true));
+            document.getElementById('btn-generate-pdf-bottom').addEventListener('click', () => handleGenerateAndSavePdf(true));
+            document.getElementById('btn-save-only').addEventListener('click', () => saveToLocalHistoryOnly(true));
+            
+            document.getElementById('btn-download-from-preview').addEventListener('click', () => {
+                if (LastGeneratedPdf.doc) LastGeneratedPdf.doc.save(LastGeneratedPdf.fileName);
+            });
+
+            document.getElementById('btn-export-excel').addEventListener('click', exportHistoryToExcel);
+            document.getElementById('btn-export-json').addEventListener('click', () => {
+                const blob = new Blob([JSON.stringify(getHistoryRecords(), null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `Backup_HSEQ_${new Date().toISOString().slice(0, 10)}.json`;
+                a.click();
+                URL.revokeObjectURL(url);
+            });
+
+            document.getElementById('history-count-badge').textContent = getHistoryRecords().length;
+        });
+    </script>
+</body>
+</html>
