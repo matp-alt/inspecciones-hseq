@@ -1030,47 +1030,64 @@
         }
 
         // ================= INICIALIZACIÓN =================
-        document.addEventListener('DOMContentLoaded', () => {
-            document.getElementById('header-brand-logo').src = EXACT_LOGO_P2;
-            loadInitialState();
-            renderFormBlocks();
-            initSignaturePads();
+        function initApp() {
+            if (window.__hseqInitialized) return;
+            window.__hseqInitialized = true;
+            try {
+                const logoEl = document.getElementById('header-brand-logo');
+                if (logoEl) logoEl.src = EXACT_LOGO_P2;
+                loadInitialState();
+                renderFormBlocks();
+                initSignaturePads();
 
-            ['obra', 'jefe', 'inspector', 'fecha', 'observaciones'].forEach(field => {
-                const el = document.getElementById(`meta-${field}`);
-                if (el) {
-                    el.addEventListener('input', (e) => {
-                        AppState.meta[field] = e.target.value;
-                        persistDraft();
-                    });
+                ['obra', 'jefe', 'inspector', 'fecha', 'observaciones'].forEach(field => {
+                    const el = document.getElementById(`meta-${field}`);
+                    if (el) {
+                        el.addEventListener('input', (e) => {
+                            AppState.meta[field] = e.target.value;
+                            persistDraft();
+                        });
+                    }
+                });
+
+                document.getElementById('btn-mark-all-ok').addEventListener('click', markAllOk);
+                document.getElementById('btn-reset-form').addEventListener('click', () => toggleModal('modal-confirm-reset', true));
+                document.getElementById('btn-confirm-reset-yes').addEventListener('click', executeResetForm);
+                document.getElementById('btn-open-history').addEventListener('click', () => toggleModal('modal-history', true));
+                document.getElementById('btn-generate-pdf').addEventListener('click', () => handleGenerateAndSavePdf(true));
+                document.getElementById('btn-generate-pdf-bottom').addEventListener('click', () => handleGenerateAndSavePdf(true));
+                document.getElementById('btn-save-only').addEventListener('click', () => saveToLocalHistoryOnly(true));
+                
+                document.getElementById('btn-download-from-preview').addEventListener('click', () => {
+                    if (LastGeneratedPdf.doc) LastGeneratedPdf.doc.save(LastGeneratedPdf.fileName);
+                });
+
+                document.getElementById('btn-export-excel').addEventListener('click', exportHistoryToExcel);
+                document.getElementById('btn-export-json').addEventListener('click', () => {
+                    const blob = new Blob([JSON.stringify(getHistoryRecords(), null, 2)], { type: 'application/json' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `Backup_HSEQ_${new Date().toISOString().slice(0, 10)}.json`;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                });
+
+                document.getElementById('history-count-badge').textContent = getHistoryRecords().length;
+            } catch (err) {
+                console.error('Error inicializando app HSEQ:', err);
+                const container = document.getElementById('blocks-container');
+                if (container && container.innerHTML === '') {
+                    container.innerHTML = `<div class="p-4 bg-rose-50 border border-rose-300 rounded-xl text-xs text-rose-800">Error de carga: ${err.message}. Recarga la página.</div>`;
                 }
-            });
+            }
+        }
 
-            document.getElementById('btn-mark-all-ok').addEventListener('click', markAllOk);
-            document.getElementById('btn-reset-form').addEventListener('click', () => toggleModal('modal-confirm-reset', true));
-            document.getElementById('btn-confirm-reset-yes').addEventListener('click', executeResetForm);
-            document.getElementById('btn-open-history').addEventListener('click', () => toggleModal('modal-history', true));
-            document.getElementById('btn-generate-pdf').addEventListener('click', () => handleGenerateAndSavePdf(true));
-            document.getElementById('btn-generate-pdf-bottom').addEventListener('click', () => handleGenerateAndSavePdf(true));
-            document.getElementById('btn-save-only').addEventListener('click', () => saveToLocalHistoryOnly(true));
-            
-            document.getElementById('btn-download-from-preview').addEventListener('click', () => {
-                if (LastGeneratedPdf.doc) LastGeneratedPdf.doc.save(LastGeneratedPdf.fileName);
-            });
-
-            document.getElementById('btn-export-excel').addEventListener('click', exportHistoryToExcel);
-            document.getElementById('btn-export-json').addEventListener('click', () => {
-                const blob = new Blob([JSON.stringify(getHistoryRecords(), null, 2)], { type: 'application/json' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `Backup_HSEQ_${new Date().toISOString().slice(0, 10)}.json`;
-                a.click();
-                URL.revokeObjectURL(url);
-            });
-
-            document.getElementById('history-count-badge').textContent = getHistoryRecords().length;
-        });
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initApp);
+        } else {
+            initApp();
+        }
     </script>
 </body>
 </html>
